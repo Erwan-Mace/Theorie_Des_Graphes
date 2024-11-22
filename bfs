@@ -1,0 +1,8 @@
+from collections import deque
+
+def lire_graphe(fichier):
+    with open(fichier, 'r') as f:
+        lignes = f.readlines()
+        
+    # Nombre de sommets
+    n = int(lignes[0].strip())
