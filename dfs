@@ -1,0 +1,70 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define MAX_SOMMETS 100
+
+// Lecture du graphe à partir d'un fichier
+void lireGraphe(const char *nomFichier, int *n, char noms[MAX_SOMMETS][30], int matrice[MAX_SOMMETS][MAX_SOMMETS]) {
+    FILE *fichier = fopen(nomFichier, "r");
+    if (!fichier) {
+        printf("Erreur : impossible d'ouvrir le fichier\n");
+        exit(1);
+    }
+
+    // Lire le nombre de sommets
+    fscanf(fichier, "%d", n);
+
+    // Lire les noms des sommets
+    for (int i = 0; i < *n; i++) {
+        fscanf(fichier, "%s", noms[i]);
+    }
+
+    // Lire la matrice d'adjacence
+    for (int i = 0; i < *n; i++) {
+        for (int j = 0; j < *n; j++) {
+            fscanf(fichier, "%d", &matrice[i][j]);
+        }
+    }
+
+    fclose(fichier);
+}
+
+// Fonction récursive pour le DFS
+void dfsRecursif(int sommet, int n, int matrice[MAX_SOMMETS][MAX_SOMMETS], bool visite[], char noms[MAX_SOMMETS][30]) {
+    visite[sommet] = true;
+    printf("%s ", noms[sommet]);
+
+    // Parcourir les voisins du sommet courant
+    for (int voisin = 0; voisin < n; voisin++) {
+        if (matrice[sommet][voisin] > 0 && !visite[voisin]) {
+            dfsRecursif(voisin, n, matrice, visite, noms);
+        }
+    }
+}
+
+// Fonction principale pour DFS
+void dfs(int n, int matrice[MAX_SOMMETS][MAX_SOMMETS], int sommetDepart, char noms[MAX_SOMMETS][30]) {
+    bool visite[MAX_SOMMETS] = {false};
+    printf("Ordre du parcours DFS : ");
+    dfsRecursif(sommetDepart, n, matrice, visite, noms);
+    printf("\n");
+}
+
+// Fonction principale
+int main() {
+    int n;
+    char noms[MAX_SOMMETS][30];
+    int matrice[MAX_SOMMETS][MAX_SOMMETS];
+
+    const char *nomFichier = "votre_fichier.txt";
+
+    // Lecture du graphe
+    lireGraphe(nomFichier, &n, noms, matrice);
+
+    // Effectuer le DFS depuis le sommet 0 (Microflores_du_sol)
+    int sommetDepart = 0; // Indice du sommet de départ
+    dfs(n, matrice, sommetDepart, noms);
+
+    return 0;
+}
