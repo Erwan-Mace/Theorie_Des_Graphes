@@ -1,0 +1,110 @@
+int trouverParent(int parent[], int i) {
+    if (parent[i] != i) {
+        parent[i] = trouverParent(parent, parent[i]);
+    }
+    return parent[i];
+}
+
+void unionSets(int parent[], int rang[], int u, int v) {
+    int racineU = trouverParent(parent, u);
+    int racineV = trouverParent(parent, v);
+    if (rang[racineU] > rang[racineV]) {
+        parent[racineV] = racineU;
+    } else if (rang[racineU] < rang[racineV]) {
+        parent[racineU] = racineV;
+    } else {
+        parent[racineV] = racineU;
+        rang[racineU]++;
+    }
+}
+
+int comparer(const void* a, const void* b) {
+    Arete* a1 = (Arete*)a;
+    Arete* a2 = (Arete*)b;
+    return a1->poids - a2->poids;
+}
+
+void kruskal(Graphe* g) {
+    int parent[M], rang[M];
+    Arete arbre[M];
+    int poidsTotal = 0;
+    for (int i = 0; i < g->Nb_noeud; i++) {
+        parent[i] = i;
+        rang[i] = 0;
+    }
+    qsort(g->aretes, g->Nb_arc, sizeof(Arete), comparer);
+
+    int compteur = 0;
+    for (int i = 0; i < g->Nb_arc && compteur < g->Nb_noeud - 1; i++) {
+        int u = g->aretes[i].src;
+        int v = g->aretes[i].dest;
+        int setU = trouverParent(parent, u);
+        int setV = trouverParent(parent, v);
+        if (setU != setV) {
+            arbre[compteur++] = g->aretes[i];
+            poidsTotal += g->aretes[i].poids;
+            unionSets(parent, rang, setU, setV);
+        }
+    }
+    printf("arbre couvrant minimum avec kruskal:\n");
+    for (int i = 0; i < compteur; i++) {
+        printf("%d - %d: %d\n", arbre[i].src, arbre[i].dest, arbre[i].poids);
+    }
+    printf("poids total: %d\n", poidsTotal);
+}
+
+void prim(Graphe* g) {
+    int parent[M], key[M], mstSet[M];
+    int poidsTotal = 0;
+    for (int i = 0; i < g->Nb_noeud; i++) {
+        key[i] = __INT_MAX__;
+        mstSet[i] = 0;
+        parent[i] = -1;
+    }
+    key[0] = 0;
+
+    for (int count = 0; count < g->Nb_noeud - 1; count++) {
+        int min = __INT_MAX__, u = -1;
+        for (int v = 0; v < g->Nb_noeud; v++) {
+            if (!mstSet[v] && key[v] < min) {
+                min = key[v];
+                u = v;
+            }
+        }
+        mstSet[u] = 1;
+
+        for (int i = 0; i < g->Nb_arc; i++) {
+            int src = g->aretes[i].src;
+            int dest = g->aretes[i].dest;
+            int poids = g->aretes[i].poids;
+
+            if (src == u && !mstSet[dest] && poids < key[dest]) {
+                parent[dest] = u;
+                key[dest] = poids;
+            }
+            if (dest == u && !mstSet[src] && poids < key[src]) {
+                parent[src] = u;
+                key[src] = poids;
+            }
+        }
+    }
+
+    for (int i = 1; i < g->Nb_noeud; i++) {
+        for (int j = 0; j < g->Nb_arc; j++) {
+            int src = g->aretes[j].src;
+            int dest = g->aretes[j].dest;
+            int poids = g->aretes[j].poids;
+            if ((src == i && dest == parent[i]) || (dest == i && src == parent[i])) {
+                poidsTotal += poids;
+            }
+        }
+    }
+
+    printf("arbre couvrant minimum par prim:\n");
+    for (int i = 1; i < g->Nb_noeud; i++) {
+        if (parent[i] != -1) {
+            printf("%d - %d: %d\n", parent[i], i, key[i]);
+        }
+    }
+    printf("poids total: %d\n", poidsTotal);
+}
