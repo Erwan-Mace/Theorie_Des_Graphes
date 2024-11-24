@@ -6,4 +6,3 @@ def lire_graphe(fichier):
         
     # Nombre de sommets
     n = int(lignes[0].strip())
-//ce code est si court qu'on pourrait en rire. nan whallah je sais pas quoi ecrire mais vsy faut faire des ligne tu coco la vie est bien dur de nos jours. bref sinon ce rapport m'a l'air pas trop mal, il reste quelque truc a rajouter mais sinon c'est pas mal du tout . il faut encore que je rajouter le coef de mortalité pour les espece qui se font boufer par personne et ca sera parfait
