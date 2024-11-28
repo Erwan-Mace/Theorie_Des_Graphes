@@ -1,0 +1,97 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_SPECIES 11
+#define MAX_NAME_LENGTH 30
+
+// Structure pour stocker les informations d'une espèce
+typedef struct {
+    char name[MAX_NAME_LENGTH];
+    int is_producer_primary;
+    int is_final_predator;
+} Species;
+
+// Fonction pour lire le fichier et charger la matrice d'adjacence et les noms d'espèces
+void load_data(const char *filename, Species species[], int adj_matrix[MAX_SPECIES][MAX_SPECIES]) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        printf("Erreur lors de l'ouverture du fichier.\n");
+        exit(1);
+    }
+
+    // Lecture des noms d'espèces
+    for (int i = 0; i < MAX_SPECIES; i++) {
+        fscanf(file, "%s", species[i].name);
+        species[i].is_producer_primary = 0;
+        species[i].is_final_predator = 0;
+    }
+
+    // Lecture de la matrice d'adjacence
+    for (int i = 0; i < MAX_SPECIES; i++) {
+        for (int j = 0; j < MAX_SPECIES; j++) {
+            fscanf(file, "%d", &adj_matrix[i][j]);
+        }
+    }
+
+    fclose(file);
+}
+
+// Fonction pour analyser les successeurs et prédécesseurs
+void analyze_ecosystem(Species species[], int adj_matrix[MAX_SPECIES][MAX_SPECIES]) {
+    for (int i = 0; i < MAX_SPECIES; i++) {
+        int has_predecessor = 0;
+        int has_successor = 0;
+
+        // Vérification des prédécesseurs (colonnes)
+        for (int j = 0; j < MAX_SPECIES; j++) {
+            if (adj_matrix[j][i] > 0) {
+                has_predecessor = 1;
+                break;
+            }
+        }
+
+        // Vérification des successeurs (lignes)
+        for (int j = 0; j < MAX_SPECIES; j++) {
+            if (adj_matrix[i][j] > 0) {
+                has_successor = 1;
+                break;
+            }
+        }
+
+        // Définir si c'est un producteur primaire ou un prédateur final
+        species[i].is_producer_primary = !has_successor;
+        species[i].is_final_predator = !has_predecessor;
+    }
+}
+
+// Fonction pour afficher les résultats
+void display_results(Species species[]) {
+    printf("Résultats de l'analyse :\n");
+    for (int i = 0; i < MAX_SPECIES; i++) {
+        printf("Espèce : %s\n", species[i].name);
+        if (species[i].is_producer_primary) {
+            printf("  - Producteur primaire\n");
+        }
+        if (species[i].is_final_predator) {
+            printf("  - Prédateur final\n");
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    Species species[MAX_SPECIES];
+    int adj_matrix[MAX_SPECIES][MAX_SPECIES];
+
+    // Charger les données depuis le fichier
+    load_data("ecosysteme.txt", species, adj_matrix);
+
+    // Analyser les successeurs et prédécesseurs
+    analyze_ecosystem(species, adj_matrix);
+
+    // Afficher les résultats
+    display_results(species);
+
+    return 0;
+}
