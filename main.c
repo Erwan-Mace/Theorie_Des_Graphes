@@ -46,7 +46,7 @@ int main() {
             break;
         case 2:
             printf("-annalyse du graphe-\n");
-            printf("Choisissez une option d analyse :\n");
+            liaisons(g);
             break;
         default:
             printf("Cette option n existe pas");
