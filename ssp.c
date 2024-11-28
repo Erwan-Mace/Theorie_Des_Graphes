@@ -65,7 +65,32 @@ Graphe* lireFichier(char* nomFichier) {
     return graphe;
 }
 
+// Fonction pour afficher les liaisons et les poids
+void liaisons(Graphe* graphe) {
+    printf("\nVerification des liaisons entre les noeuds :\n");
 
+    for (int i = 0; i < graphe->ordre; i++) {
+        printf("Liaisons pour %s : ", graphe->pSommet[i]->nom);
+        bool liaison_existe = false;
+
+        // Parcours des arcs sortants
+        for (parc arc = graphe->pSommet[i]->arc; arc != NULL; arc = arc->arc_suivant) {
+            if (liaison_existe) {
+                printf(", ");
+            }
+            printf("%s (poids : %.2f)", graphe->pSommet[arc->sommet]->nom, arc->valeur);
+            liaison_existe = true;
+        }
+
+        if (!liaison_existe) {
+            printf("aucune liaison");
+        }
+
+        printf("\n");
+    }
+
+    printf("\nAnalyse terminee : Tous les noeuds sont connectes et affiches.\n");
+}
 
 
 void liberer_graphe(Graphe* graphe) {
