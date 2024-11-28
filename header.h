@@ -36,7 +36,8 @@ typedef struct Graphe
 
 Graphe * lireFichier(char * nomFichier);
 void liberer_graphe(Graphe* graphe);
-int bfs(Graphe* g, int source, int puits, int* parent);
+//int bfs(Graphe* g, int source, int puits, int* parent);
+void liaisons(Graphe* graphe);
 
 
 #endif //CODE_BASE_PROJET_HEADER_H
