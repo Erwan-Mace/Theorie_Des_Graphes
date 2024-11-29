@@ -19,7 +19,7 @@ int main() {
     switch (choix) {
         case 1:
             printf("\necosysteme choisis : Mer \n");
-            strcpy(nom_fichier, "matrice");
+            strcpy(nom_fichier, "Mer");
             break;
         case 2:
             printf("\necosysteme choisis : Foret \n");
@@ -27,7 +27,7 @@ int main() {
             break;
         case 3:
             printf("\necosysteme choisis : Savane \n");
-            strcpy(nom_fichier, "matrice");
+            strcpy(nom_fichier, "Savane");
             break;
         default:
             printf("Nous n avons pas d ecosysteme pour un tel numero");
@@ -42,7 +42,7 @@ int main() {
     switch (choix) {
         case 1:
             printf("-Simulation-\n");
-            printf("Choisissez le nombre d annee de votre simulation :\n");
+            Simu(g);
             break;
         case 2:
             printf("-annalyse du graphe-\n");
