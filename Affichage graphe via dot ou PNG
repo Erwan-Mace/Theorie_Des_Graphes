@@ -1,0 +1,118 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Fonction pour créer le fichier DOT à partir d'une matrice
+void creer_dot(const char *fichier_texte, const char *fichier_dot) {
+    FILE *f_texte = fopen(fichier_texte, "r");
+    if (!f_texte) {
+        printf("Erreur : impossible d'ouvrir le fichier texte %s.\n", fichier_texte);
+        return;
+    }
+
+    FILE *f_dot = fopen(fichier_dot, "w");
+    if (!f_dot) {
+        printf("Erreur : impossible de creer le fichier DOT %s.\n", fichier_dot);
+        fclose(f_texte);
+        return;
+    }
+
+    int nb_sommets;
+    fscanf(f_texte, "%d", &nb_sommets);
+
+    char noms[nb_sommets][50];
+    for (int i = 0; i < nb_sommets; i++) {
+        fscanf(f_texte, "%s", noms[i]);
+    }
+
+    fprintf(f_dot, "digraph G {\n");
+
+    // Lire la matrice d'adjacence
+    float poids;
+    for (int i = 0; i < nb_sommets; i++) {
+        for (int j = 0; j < nb_sommets; j++) {
+            fscanf(f_texte, "%f", &poids);
+            if (poids > 0) {
+                fprintf(f_dot, "    %s -> %s [label=\"%.1f\"];\n", noms[i], noms[j], poids);
+            }
+        }
+    }
+
+    // Ignorer la ligne des taux de croissance
+    for (int i = 0; i < nb_sommets; i++) {
+        fscanf(f_texte, "%f", &poids);
+    }
+
+    // Lire la ligne des populations initiales et l'ajouter aux nœuds
+    float population_initiale[nb_sommets];
+    for (int i = 0; i < nb_sommets; i++) {
+        fscanf(f_texte, "%f", &population_initiale[i]);
+        fprintf(f_dot, "    %s [label=\"%s\\nPop: %.0f\"];\n", noms[i], noms[i], population_initiale[i]);
+    }
+
+    fprintf(f_dot, "}\n");
+
+    fclose(f_texte);
+    fclose(f_dot);
+
+    printf("Le fichier DOT est genere : %s\n", fichier_dot);
+}
+
+// Fonction pour afficher le graphe sous forme d'image PNG
+void afficher_graphe_png(const char *fichier_dot) {
+    char commande[200];
+    char fichier_png[100];
+
+    strcpy(fichier_png, fichier_dot);
+    char *extension = strrchr(fichier_png, '.');
+    if (extension) {
+        strcpy(extension, ".png");
+    } else {
+        strcat(fichier_png, ".png");
+    }
+
+    sprintf(commande, "dot -Tpng %s -o %s", fichier_dot, fichier_png);
+    int ret = system(commande);
+    if (ret != 0) {
+        printf("Erreur : impossible de générer l'image PNG. Vérifiez que Graphviz est installé.\n");
+        return;
+    }
+
+    sprintf(commande, "start %s", fichier_png); // Windows
+    // Pour Linux, utilisez : sprintf(commande, "xdg-open %s", fichier_png);
+    // Pour macOS, utilisez : sprintf(commande, "open %s", fichier_png);
+    system(commande);
+
+    printf("Le graphe PNG est affiche : %s\n", fichier_png);
+}
+
+int main() {
+    const char *matrices[] = {
+            "MatriceOcean.txt",
+            "MatriceForet.txt",
+            "MatriceSavane.txt"
+    };
+
+    const char *fichier_dot = "graphe.dot";
+    int choix;
+
+    printf("Veuillez choisisr un ecosysteme :\n");
+    printf("1. Ecosysteme Ocean\n");
+    printf("2. Ecosysteme Foret\n");
+    printf("3. Ecosysteme Savane\n");
+    printf("Entrez votre choix (1-3) : ");
+    scanf("%d", &choix);
+
+    if (choix < 1 || choix > 3) {
+        printf("Choix invalide. Veuillez redémarrer le programme.\n");
+        return 1;
+    }
+
+    // Créer le fichier DOT à partir du fichier texte correspondant
+    creer_dot(matrices[choix - 1], fichier_dot);
+
+    // Générer et afficher l'image PNG du graphe
+    afficher_graphe_png(fichier_dot);
+
+    return 0;
+}
