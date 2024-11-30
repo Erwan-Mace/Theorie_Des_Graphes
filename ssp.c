@@ -75,34 +75,73 @@ Graphe* lireFichier(char* nomFichier) {
     fclose(ifs);
     return graphe;
 }
-
-// Fonction pour afficher les liaisons et les poids
-void liaisons(Graphe* graphe) {
-    printf("\nVerification des liaisons entre les noeuds :\n");
-
-    for (int i = 0; i < graphe->ordre; i++) {
-        printf("Liaisons pour %s : ", graphe->pSommet[i]->nom);
-        bool liaison_existe = false;
-
-        // Parcours des arcs sortants
-        for (parc arc = graphe->pSommet[i]->arc; arc != NULL; arc = arc->arc_suivant) {
-            if (liaison_existe) {
-                printf(", ");
-            }
-            printf("%s (poids : %.2f)", graphe->pSommet[arc->sommet]->nom, arc->valeur);
-            liaison_existe = true;
-        }
-
-        if (!liaison_existe) {
-            printf("aucune liaison");
-        }
-
-        printf("\n");
+// Fonction pour calculer le niveau trophique d'un sommet
+int niveaut(Graphe* graphe, int* niveaux, int index) {
+    if (niveaux[index] > 0) {
+        return niveaux[index]; // Si déjà calculé, retourner le niveau
     }
 
-    printf("\nAnalyse terminee : Tous les noeuds sont connectes et affiches.\n");
-}
+    parc arc = graphe->pSommet[index]->arc;
 
+    // Si le sommet n'a pas d'arcs entrants (aucune proie), il est au niveau trophique 5
+    if (!arc) {
+        niveaux[index] = 5; // Producteur primaire devient 5 (le niveau le plus élevé dans l'inversion)
+        return 5;
+    }
+
+    // Si le sommet est un prédateur, calculer son niveau en fonction des proies
+    int min_niveau_proie = 5; // Initialisé à 5, car nous cherchons le niveau le plus bas (inversion)
+    while (arc) {
+        int niveau_proie = niveaut(graphe, niveaux, arc->sommet);
+        if (niveau_proie < min_niveau_proie) {
+            min_niveau_proie = niveau_proie;
+        }
+        arc = arc->arc_suivant;
+    }
+
+    niveaux[index] = min_niveau_proie - 1; // Le prédateur est un niveau au-dessous de sa proie la plus basse
+
+    // Limiter les niveaux trophiques entre 1 et 5
+    if (niveaux[index] < 1) {
+        niveaux[index] = 1;
+    }
+
+    return niveaux[index];
+}
+// Fonction pour afficher les liaisons et les poids
+void liaisons(Graphe* graphe) {
+    int ordre = graphe->ordre;
+    int niveaux[ordre];
+
+    // Initialiser les niveaux à 0 (non calculés)
+    for (int i = 0; i < ordre; i++) {
+        niveaux[i] = 0;
+    }
+
+    // Calculer les niveaux trophiques pour tous les sommets
+    for (int i = 0; i < ordre; i++) {
+        niveaut(graphe, niveaux, i);
+    }
+
+    // Afficher les liaisons avec niveaux trophiques
+    printf("\nLiaisons entre les noeuds et niveau trophique:\n");
+    for (int i = 0; i < ordre; i++) {
+        printf(" %s (Niveau trophique : %d) : ", graphe->pSommet[i]->nom, niveaux[i]);
+        parc arc = graphe->pSommet[i]->arc;
+        if (!arc) {
+            printf("aucune liaison\n");
+            continue;
+        }
+        while (arc) {
+            printf("%s (poids : %.2f)", graphe->pSommet[arc->sommet]->nom, arc->valeur);
+            if (arc->arc_suivant) {
+                printf(", ");
+            }
+            arc = arc->arc_suivant;
+        }
+        printf("\n");
+    }
+}
 
 void liberer_graphe(Graphe* graphe) {
     for (int i = 0; i < graphe->ordre; i++) {
