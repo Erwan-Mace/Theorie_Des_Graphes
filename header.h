@@ -48,4 +48,8 @@ void Successeur_Predecesseur(Graphe* graphe, int sommet, int* successeurs, int* 
 float SommePopMangee(int* predecesseurs, int nbPredesseurs, Graphe* graphe, float* populations);
 void Afficher_N(Graphe* graphe);
 void ecrireFichier(const Graphe* graphe, const char* nomFichier);
-#endif //CODE_BASE_PROJET
+void afficher_centre(const char* texte, int largeur_console);
+void dessiner_ligne(int largeur_console, char caractere);
+void afficher_titre_3D();
+void Analyse(Graphe* graphe);
+#endif //CODE_BASE_PROJET_HEADER_H
