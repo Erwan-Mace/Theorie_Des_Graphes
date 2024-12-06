@@ -533,14 +533,17 @@ void Analyse(Graphe* graphe) {
                 break;
             case 2:
                 printf("\nAffichage des derniers maillons...\n");
+                spredateurs(graphe);
                 //afficher_dernieres_maillons(graphe);
                 break;
             case 3:
                 printf("\nAffichage des especes avec une seule source de nourriture...\n");
+                unesource(graphe);
                 //afficher_especes_une_source(graphe);
                 break;
             case 4:
                 printf("\nAffichage du reseau trophique...\n");
+                liaisonniv(graphe);
                 //afficher_reseau_trophique(graphe);
                 break;
             case 5:
@@ -558,6 +561,119 @@ void Analyse(Graphe* graphe) {
                 printf("\nChoix invalide. Veuillez réessayer.\n");
         }
     } while (choix != 7);
+}
+void spredateurs(Graphe* graphe) {
+    printf("\nAnimaux sans predateurs (super-predateurs) :\n");
+    bool trouve = false;
+    // parcours de chaque sommet
+    for (int i = 0; i < graphe->ordre; i++) {
+        bool a_une_proie = false;
+        // verification des arcs sortants 
+        for (int j = 0; j < graphe->ordre; j++) {
+            if (graphe->capacite[i][j] > 0) { // verifie les arcs sortants pour chaque sommet
+                a_une_proie = true;
+                break;
+            }
+        }
+
+        // Si aucune proie trouvée (ligne entièrement 0), c'est un super-predateur
+        if (!a_une_proie) {
+            printf("- %s\n", graphe->pSommet[i]->nom);
+            trouve = true;
+        }
+    }
+
+    if (!trouve) {
+        printf("Aucun super-predateur trouve.\n");
+    }
+    printf("\n");
+}
+// Fonction qui vérifie les espèces ayant une seule source de nourriture 
+void unesource(Graphe* graphe) {
+    printf("\nEspeces ayant une seule source de nourriture :\n");
+
+    // verifier chaque sommet pour ses arcs entrants
+    for (int i = 0; i < graphe->ordre; i++) {
+        int nb_sources = 0; // compteur pour les arcs entrants
+
+        // parcours des arcs entrants 
+        for (int j = 0; j < graphe->ordre; j++) {
+            parc arc = graphe->pSommet[j]->arc;
+            while (arc != NULL) {
+                if (arc->sommet == i) { // si l'arc pointe vers le sommet i
+                    nb_sources++;
+                    break; 
+                }
+                arc = arc->arc_suivant;
+            }
+        }
+        // si une espèce a exactement une source de nourriture 
+        if (nb_sources == 1) {
+            printf("- %s\n", graphe->pSommet[i]->nom);
+        }
+    }
+}
+// Fonction pour calculer le niveau trophique d'un sommet
+int calculer_niveau(Graphe* graphe, int* niveaux, int index) {
+    if (niveaux[index] > 0) {
+        return niveaux[index]; // si deja calcule retourner le niveau
+    }
+    int unpredateur = 0;
+    int uneproie = 0;
+    // verifier les predateurs 
+    for (int i = 0; i < graphe->ordre; i++) {
+        parc pred = graphe->pSommet[i]->arc;
+        while (pred) {
+            if (pred->sommet == index) {
+                unpredateur = 1; 
+                break;
+            }
+            pred = pred->arc_suivant;
+        }
+        if (unpredateur) break;
+    }
+    parc arc = graphe->pSommet[index]->arc;
+    if (arc) {
+        uneproie = 1;
+    }
+    if (unpredateur && !uneproie) {
+        niveaux[index] = 3;
+    } else if (unpredateur && uneproie) {
+        niveaux[index] = 2;
+    } else if (!unpredateur && uneproie) {
+        niveaux[index] = 1; 
+    } else {
+        niveaux[index] = -1; //sommet isole
+    }
+    return niveaux[index];
+}
+// Fonction pour afficher les liaisons avec niveaux trophiques
+void liaisonniv(Graphe* graphe) {
+    int ordre = graphe->ordre;
+    int niveaux[ordre];
+    for (int i = 0; i < ordre; i++) {
+        niveaux[i] = 0;
+    }
+    for (int i = 0; i < ordre; i++) {
+        calculer_niveau(graphe, niveaux, i);
+    }
+    printf("\nLiaisons entre les noeuds (avec niveaux trophiques) :\n");
+    for (int i = 0; i < ordre; i++) {
+        printf(" %s (Niveau trophique : %d) : ", graphe->pSommet[i]->nom, niveaux[i]);
+        parc arc = graphe->pSommet[i]->arc;
+        if (!arc) {
+            printf("aucune liaison\n");
+            continue;
+        }
+        while (arc) {
+            printf("%s (poids : %.2f)", graphe->pSommet[arc->sommet]->nom, arc->valeur);
+            if (arc->arc_suivant) {
+                printf(", ");
+            }
+            arc = arc->arc_suivant;
+        }
+        printf("\n");
+    }
 }
 
 
