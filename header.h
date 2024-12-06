@@ -52,4 +52,8 @@ void afficher_centre(const char* texte, int largeur_console);
 void dessiner_ligne(int largeur_console, char caractere);
 void afficher_titre_3D();
 void Analyse(Graphe* graphe);
+void unesource(Graphe* graphe);
+void liaisonniv(Graphe* graphe);
+int calculer_niveau(Graphe* graphe, int* niveaux, int index);
+void spredateurs(Graphe* graphe);
 #endif //CODE_BASE_PROJET_HEADER_H
