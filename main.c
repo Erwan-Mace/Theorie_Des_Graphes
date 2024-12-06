@@ -1,58 +1,106 @@
+
+
+#include <Windows.h>
+
 #include <stdio.h>
 #include "header.h"
 #include <stdlib.h>
 #include <string.h>
-
 int main() {
-    Graphe* g;
+    const int largeur_console = 148;
+    Graphe* g = NULL;
     char nom_fichier[50];
     int choix;
 
-    printf("\n-menu-\n");
-    printf("-ecris un numero pour choisir ton graphe-\n");
-    printf("-1 : Mer -\n");
-    printf("-2 : Foret -\n");
-    printf("-3 : Savane -\n");
+    while (1) {
+        // Afficher le titre en "3D"
+        dessiner_ligne(largeur_console, '=');
+        afficher_titre_3D();
+        dessiner_ligne(largeur_console, '=');
 
-    scanf("%d", &choix);
+        // Menu principal
+        afficher_centre("Ecris un numero pour choisir ton graphe :", largeur_console);
+        printf("\n");
+        afficher_centre("1 : Mer", largeur_console);
+        afficher_centre("2 : Foret", largeur_console);
+        afficher_centre("3 : Savane", largeur_console);
+        afficher_centre("4 : Quitter", largeur_console);
+        printf("\n");
 
-    switch (choix) {
-        case 1:
-            printf("\necosysteme choisis : Mer \n");
-            strcpy(nom_fichier, "Mer");
+        // Saisie du choix
+        printf("Entrez votre choix : ");
+        scanf("%d", &choix);
+
+        if (choix == 4) {
             break;
-        case 2:
-            printf("\necosysteme choisis : Foret \n");
-            strcpy(nom_fichier, "matrice");
-            break;
-        case 3:
-            printf("\necosysteme choisis : Savane \n");
-            strcpy(nom_fichier, "Savane");
-            break;
-        default:
-            printf("Nous n avons pas d ecosysteme pour un tel numero");
+        }
+
+        // Traitement du choix
+        switch (choix) {
+            case 1:
+                printf("\nEcosysteme choisi : Mer\n");
+                strcpy(nom_fichier, "Mer");
+                break;
+            case 2:
+                printf("\nEcosysteme choisi : Foret\n");
+                strcpy(nom_fichier, "matrice");
+                break;
+            case 3:
+                printf("\nEcosysteme choisi : Savane\n");
+                strcpy(nom_fichier, "Savane");
+                break;
+            default:
+                printf("Nous n avons pas d ecosysteme pour un tel numero\n");
+                continue;
+        }
+
+        // Lecture du graphe
+        g = lireFichier(nom_fichier);
+        if (!g) {
+            printf("Erreur lors de la lecture du graphe.\n");
+            continue;
+        }
+
+        while (1) {
+            // Menu des actions
+            dessiner_ligne(largeur_console, '-');
+            afficher_centre("Que voulez-vous faire ?", largeur_console);
+            dessiner_ligne(largeur_console, '-');
+            afficher_centre("1 : Lancer la simulation", largeur_console);
+            afficher_centre("2 : Analyser le graphe", largeur_console);
+            afficher_centre("3 : Revenir au menu principal", largeur_console);
+            printf("\n");
+
+            // Saisie du choix
+            printf("Entrez votre choix : ");
+            scanf("%d", &choix);
+            system("cls");
+            if (choix == 3) {
+                liberer_graphe(g);
+                g = NULL;
+                break;
+            }
+
+            // Traitement du choix
+            switch (choix) {
+                case 1:
+                    printf("\nSimulation\n");
+                    Simu(g);
+                    break;
+                case 2:
+                    printf("\nAnalyse du graphe\n");
+                    Analyse(g);
+                    break;
+                default:
+                    printf("Cette option n'existe pas\n");
+            }
+        }
     }
 
-    g = lireFichier(nom_fichier);//lecture de la matrice
-    printf("\nVous voulez :\n");
-    printf("1 : lancer la simulation\n");
-    printf("2 : annalyser le graphe\n");
-    scanf("%d", &choix);
-
-    switch (choix) {
-        case 1:
-            printf("-Simulation-\n");
-            Simu(g);
-            break;
-        case 2:
-            printf("-annalyse du graphe-\n");
-            liaisons(g);
-            break;
-        default:
-            printf("Cette option n existe pas");
+    // Libération de mémoire si nécessaire
+    if (g) {
+        liberer_graphe(g);
     }
-    //les free memoire
-    liberer_graphe(g);
 
     return 0;
 }
