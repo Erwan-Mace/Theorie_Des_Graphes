@@ -1,6 +1,7 @@
 //
 // Created by basti on 14/11/2024.
 //
+#include <Windows.h>
 #include <stdio.h>
 #include "header.h"
 #include <stdlib.h>
@@ -75,73 +76,34 @@ Graphe* lireFichier(char* nomFichier) {
     fclose(ifs);
     return graphe;
 }
-// Fonction pour calculer le niveau trophique d'un sommet
-int niveaut(Graphe* graphe, int* niveaux, int index) {
-    if (niveaux[index] > 0) {
-        return niveaux[index]; // Si déjà calculé, retourner le niveau
-    }
 
-    parc arc = graphe->pSommet[index]->arc;
-
-    // Si le sommet n'a pas d'arcs entrants (aucune proie), il est au niveau trophique 5
-    if (!arc) {
-        niveaux[index] = 5; // Producteur primaire devient 5 (le niveau le plus élevé dans l'inversion)
-        return 5;
-    }
-
-    // Si le sommet est un prédateur, calculer son niveau en fonction des proies
-    int min_niveau_proie = 5; // Initialisé à 5, car nous cherchons le niveau le plus bas (inversion)
-    while (arc) {
-        int niveau_proie = niveaut(graphe, niveaux, arc->sommet);
-        if (niveau_proie < min_niveau_proie) {
-            min_niveau_proie = niveau_proie;
-        }
-        arc = arc->arc_suivant;
-    }
-
-    niveaux[index] = min_niveau_proie - 1; // Le prédateur est un niveau au-dessous de sa proie la plus basse
-
-    // Limiter les niveaux trophiques entre 1 et 5
-    if (niveaux[index] < 1) {
-        niveaux[index] = 1;
-    }
-
-    return niveaux[index];
-}
 // Fonction pour afficher les liaisons et les poids
 void liaisons(Graphe* graphe) {
-    int ordre = graphe->ordre;
-    int niveaux[ordre];
+    printf("\nVerification des liaisons entre les noeuds :\n");
 
-    // Initialiser les niveaux à 0 (non calculés)
-    for (int i = 0; i < ordre; i++) {
-        niveaux[i] = 0;
-    }
+    for (int i = 0; i < graphe->ordre; i++) {
+        printf("Liaisons pour %s : ", graphe->pSommet[i]->nom);
+        bool liaison_existe = false;
 
-    // Calculer les niveaux trophiques pour tous les sommets
-    for (int i = 0; i < ordre; i++) {
-        niveaut(graphe, niveaux, i);
-    }
-
-    // Afficher les liaisons avec niveaux trophiques
-    printf("\nLiaisons entre les noeuds et niveau trophique:\n");
-    for (int i = 0; i < ordre; i++) {
-        printf(" %s (Niveau trophique : %d) : ", graphe->pSommet[i]->nom, niveaux[i]);
-        parc arc = graphe->pSommet[i]->arc;
-        if (!arc) {
-            printf("aucune liaison\n");
-            continue;
-        }
-        while (arc) {
-            printf("%s (poids : %.2f)", graphe->pSommet[arc->sommet]->nom, arc->valeur);
-            if (arc->arc_suivant) {
+        // Parcours des arcs sortants
+        for (parc arc = graphe->pSommet[i]->arc; arc != NULL; arc = arc->arc_suivant) {
+            if (liaison_existe) {
                 printf(", ");
             }
-            arc = arc->arc_suivant;
+            printf("%s (poids : %.2f)", graphe->pSommet[arc->sommet]->nom, arc->valeur);
+            liaison_existe = true;
         }
+
+        if (!liaison_existe) {
+            printf("aucune liaison");
+        }
+
         printf("\n");
     }
+
+    printf("\nAnalyse terminee : Tous les noeuds sont connectes et affiches.\n");
 }
+
 
 void liberer_graphe(Graphe* graphe) {
     for (int i = 0; i < graphe->ordre; i++) {
@@ -185,6 +147,9 @@ void Simu(Graphe* graphe) {
                         graphe_actualiser = Graphe_semaine(graphe, semaine); // Créer un nouveau graphe
                         Afficher_N(graphe_actualiser);
                         ecrireFichier(graphe_actualiser,"grapheActuel");
+                        const char *fichier_dot = "graphe.dot";
+                        creer_dot("grapheActuel", fichier_dot);
+                        afficher_graphe_png(fichier_dot);
                     }
                 } else if (touche == 77) {
                     // Flèche droite
@@ -204,7 +169,6 @@ void Simu(Graphe* graphe) {
         }
     }
 
-    // Libération finale du graphe avant la fin de la simulation
     liberer_graphe(graphe_actualiser);
 }
 
@@ -223,21 +187,8 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
         // Remplir les listes de successeurs et prédécesseurs
         Successeur_Predecesseur(graphe, i, successeurs, &nbSuccesseurs, predesseurs, &nbPredesseurs);
 
-        // Initialisation de K_i à partir des prédécesseurs (nourriture disponible)
-        float K_i = 0;
-        for (int j = 0; j < nbPredesseurs; j++) {
-            int pred = predesseurs[j];
-            parc arc_pred = Graphe_simu->pSommet[pred]->arc;
-            while (arc_pred != NULL) {
-                if (arc_pred->sommet == i) {  // Si l'arc est dirigé vers i
-                    K_i += Graphe_simu->pSommet[pred]->N * arc_pred->valeur;  // Multiplier N_j (valeur du prédécesseur) par le coefficient (poids de l'arc)
-                    break;
-                }
-                arc_pred = arc_pred->arc_suivant;
-            }
-        }
 
-        float N_i = Graphe_simu->pSommet[i]->N;  // Valeur initiale de N
+        float N_i = (float)Graphe_simu->pSommet[i]->N;  // Valeur initiale de N
         float r_i = Graphe_simu->pSommet[i]->coef;    // Coefficient r (peut-être un autre paramètre de consommation)
 
         // Sauvegarde de la population initiale
@@ -245,6 +196,19 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
 
         // Appliquer les calculs pour les semaines
         for (int t = 0; t < semaine; t++) {
+
+            float K_i = 0;
+            for (int j = 0; j < nbPredesseurs; j++) {
+                int pred = predesseurs[j];
+                parc arc_pred = Graphe_simu->pSommet[pred]->arc;
+                while (arc_pred != NULL) {
+                    if (arc_pred->sommet == i) {  // Si l'arc est dirigé vers i
+                        K_i += (float)Graphe_simu->pSommet[pred]->N * arc_pred->valeur;  // Multiplier N_j (valeur du prédécesseur) par le coefficient (poids de l'arc)
+                        break;
+                    }
+                    arc_pred = arc_pred->arc_suivant;
+                }
+            }
             // Assurer que K_i est non nul et qu'il est suffisamment grand
             if (K_i < 0.0001) K_i = 0.0001;  // Bloquer K_i à une valeur minimale
 
@@ -252,14 +216,8 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
             if (N_i / K_i >= 1) {
                 K_i = N_i / 0.9999;  // Ajuster K_i pour qu'il soit supérieur à N_i
             }
-
-            // Limitation de la croissance de N_i
-            if (N_i > 1000000) {  // Limiter la population à une valeur raisonnable
-                N_i = 1000000;
-            }
-
             // Calcul de N_i en fonction des successeurs et prédécesseurs
-            if (nbSuccesseurs == 0 && nbPredesseurs > 0) {  // Sommet est super-prédateur (n'a pas de successeur)
+            if (nbSuccesseurs == 0) {  // Sommet est super-prédateur (n'a pas de successeur)
                 N_i += r_i * N_i * (1 - N_i / K_i) - N_i * CoefMortalite;  // L'équation pour un prédateur (prend en compte la mortalité)
             }
             else if (nbPredesseurs == 0) {  // Sommet est producteur (pas de prédateurs)
@@ -439,7 +397,6 @@ void ecrireFichier(const Graphe* graphe, const char* nomFichier) {
     fprintf(ofs, "\n");
 
     fclose(ofs);
-    printf("Le fichier texte a été généré : %s\n", nomFichier);
 }
 
 
@@ -524,3 +481,92 @@ void afficher_graphe_png(const char *fichier_dot) {
 
     printf("Le graphe PNG est affiche : %s\n", fichier_png);
 }
+
+void afficher_centre(const char* texte, int largeur_console) {
+    int longueur = strlen(texte);
+    int espaces = (largeur_console - longueur) / 2;
+    for (int i = 0; i < espaces; i++) {
+        printf(" ");
+    }
+    printf("%s\n", texte);
+}
+
+// Fonction pour dessiner une ligne horizontale
+void dessiner_ligne(int largeur_console, char caractere) {
+    for (int i = 0; i < largeur_console; i++) {
+        printf("%c", caractere);
+    }
+    printf("\n");
+}
+
+
+void afficher_titre_3D() {
+    SetConsoleOutputCP(65001);
+    printf("\n");
+    printf("████████╗ ██████╗    ██████╗  ██████╗  ██╗  ██╗ ██╗  ██████╗     ███╗   ██╗ ███████╗ ████████╗ ██╗    ██╗  ██████╗  ██████╗  ██╗  ██╗ ███████╗\n");
+    printf("╚══██╔══╝ ██╔══██╗  ██╔═══██╗ ██╔══██╗ ██║  ██║ ██║ ██╔═══██╗    ████╗  ██║ ██╔════╝ ╚══██╔══╝ ██║    ██║ ██╔═══██╗ ██╔══██╗ ██║ ██╔╝ ██╔════╝\n");
+    printf("   ██║    ██████╔╝  ██║   ██║ ██████╔╝ ███████║ ██║ ██║          ██╔██╗ ██║ █████╗      ██║    ██║ █╗ ██║ ██║   ██║ ██████╔╝ █████╔╝  ███████╗\n");
+    printf("   ██║    ██╔══██╗  ██║   ██║ ██╔═══╝  ██╔══██║ ██║ ██║          ██║╚██╗██║ ██╔══╝      ██║    ██║███╗██║ ██║   ██║ ██╔══██╗ ██╔═██╗  ╚════██║\n");
+    printf("   ██║    ██║   ██╗ ╚██████╔╝ ██║      ██║  ██║ ██║ ╚██████╔╝    ██║ ╚████║ ███████╗    ██║    ╚███╔███╔╝ ╚██████╔╝ ██║   ██╗██║  ██╗ ███████║\n");
+    printf("   ╚═╝    ╚═╝   ╚═╝  ╚═════╝  ╚═╝      ╚═╝  ╚═╝ ╚═╝  ╚═════╝     ╚═╝  ╚═══╝ ╚══════╝    ╚═╝     ╚══╝╚══╝   ╚═════╝  ╚═╝   ╚═╝╚═╝  ╚═╝ ╚══════╝\n");
+    printf("\n");
+}
+
+void Analyse(Graphe* graphe) {
+    int choix;
+    do {
+
+        printf("\n1. Verifier si le graphe est connexe\n");
+        printf("2. Afficher les derniers maillons (sans predateurs)\n");
+        printf("3. Afficher les especes ayant une seule source de nourriture\n");
+        printf("4. Afficher le reseau trophique\n");
+        printf("5. Simuler la disparition d une espece\n");
+        printf("6. Estimer l importance d une espece (centralite)\n");
+        printf("7. Retourner en arriere\n");
+        printf("Votre choix : ");
+        scanf("%d", &choix);
+
+        switch (choix) {
+            case 1:
+                printf("\nVerification de la connexite...\n");
+                //verifier_connexite(graphe);
+                break;
+            case 2:
+                printf("\nAffichage des derniers maillons...\n");
+                //afficher_dernieres_maillons(graphe);
+                break;
+            case 3:
+                printf("\nAffichage des especes avec une seule source de nourriture...\n");
+                //afficher_especes_une_source(graphe);
+                break;
+            case 4:
+                printf("\nAffichage du reseau trophique...\n");
+                //afficher_reseau_trophique(graphe);
+                break;
+            case 5:
+                printf("\nSimulation de la disparition d une espece...\n");
+                //simuler_disparition(graphe);
+                break;
+            case 6:
+                printf("\nEstimation de l importance d'une espece...\n");
+                //mesurer_centralite(graphe);
+                break;
+            case 7:
+                printf("\nRetour au menu principal...\n");
+                break;
+            default:
+                printf("\nChoix invalide. Veuillez réessayer.\n");
+        }
+    } while (choix != 7);
+}
+
+
+
+
+
+
+
+
+
+
+
