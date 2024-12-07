@@ -8,7 +8,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <conio.h>
-#define  CoefMortalite 0.3
+#include <math.h>
+
 Graphe* lireFichier(char* nomFichier) {
     Graphe* graphe;
     FILE* ifs = fopen(nomFichier, "r");
@@ -125,8 +126,14 @@ void Simu(Graphe* graphe) {
     Graphe* graphe_actualiser = Copie_graphe(graphe); // Initialiser avec une copie du graphe original
 
     printf("Affichage graphe semaine %d\n", semaine);
+    printf("\033[0m");
     Afficher_N(graphe_actualiser);
-
+    printf("\033[0;32m");
+    printf("fleche gauche : graphe semaine prochaine\n"
+           "fleche droite : graphe semaine avant\n"
+           "fleche haut : quitter la simulation\n"
+           "fleche droite : sauvegarde le graphe actuel\n");
+    printf("\033[0m");
     while (simulation) {
         _sleep(400);
         if (_kbhit()) { // Vérifie si une touche est appuyée
@@ -142,101 +149,130 @@ void Simu(Graphe* graphe) {
                         printf("\nOn ne peut pas avoir de graphe avant semaine 0\n");
                     } else {
                         semaine -= 1;
+                        printf("\033[0;35m");
                         printf("\nAffichage graphe semaine %d\n", semaine);
+                        printf("\033[0m");
                         liberer_graphe(graphe_actualiser); // Libérer l'ancien graphe
                         graphe_actualiser = Graphe_semaine(graphe, semaine); // Créer un nouveau graphe
                         Afficher_N(graphe_actualiser);
-                        ecrireFichier(graphe_actualiser,"grapheActuel");
+                        ecrireFichier(graphe_actualiser, "grapheActuel");
                         const char *fichier_dot = "graphe.dot";
                         creer_dot("grapheActuel", fichier_dot);
                         afficher_graphe_png(fichier_dot);
+                        printf("\033[0;32m");
+                        printf("\nfleche gauche : graphe semaine prochaine\n"
+                               "fleche droite : graphe semaine avant\n"
+                               "fleche haut : quitter la simulation\n"
+                               "fleche droite : sauvegarde le graphe actuel\n");
+                        printf("\033[0m");
                     }
                 } else if (touche == 77) {
                     // Flèche droite
                     semaine += 1;
+                    printf("\033[0;35m");
                     printf("\nAffichage graphe semaine %d\n", semaine);
+                    printf("\033[0m");
                     liberer_graphe(graphe_actualiser); // Libérer l'ancien graphe
                     graphe_actualiser = Graphe_semaine(graphe, semaine); // Créer un nouveau graphe
                     Afficher_N(graphe_actualiser);
-                    ecrireFichier(graphe_actualiser,"grapheActuel");
+                    ecrireFichier(graphe_actualiser, "grapheActuel");
                     const char *fichier_dot = "graphe.dot";
                     creer_dot("grapheActuel", fichier_dot);
-
-                    // Générer et afficher l'image PNG du graphe
                     afficher_graphe_png(fichier_dot);
+                    printf("\033[0;32m");
+                    printf("\nfleche gauche : graphe semaine prochaine\n"
+                           "fleche droite : graphe semaine avant\n"
+                           "fleche haut : quitter la simulation\n"
+                           "fleche droite : sauvegarde le graphe actuel\n");
+                    printf("\033[0m");
+                } else if (touche == 80) {
+                    // Flèche bas
+                    char nom[50];
+                    printf("\033[0;35m");
+                    printf("\nDonnez le noms de la sauvegarde du graphe :\n");
+                    printf("\033[0m");
+                    scanf("%s",nom);
+                    printf("\033[0;35m");
+                    ecrireFichier(graphe_actualiser,nom);
+                    printf("graphe %s sauvegardee\n",nom);
+                    printf("\033[0;32m");
+                    printf("\nfleche gauche : graphe semaine prochaine\n"
+                           "fleche droite : graphe semaine avant\n"
+                           "fleche haut : quitter la simulation\n"
+                           "fleche droite : sauvegarde le graphe actuel\n");
+                    printf("\033[0m");
                 }
             }
         }
     }
-
-    liberer_graphe(graphe_actualiser);
+    liberer_graphe(graphe_actualiser); // Libérer la mémoire du graphe actualisé
 }
+
 
 Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
     Graphe* Graphe_simu = Copie_graphe(graphe);
-
-    // Tableaux pour stocker les populations de chaque semaine
     float* populations_anterieures = malloc(graphe->ordre * sizeof(float));
 
+    // Initialiser les populations antérieures à la population actuelle
     for (int i = 0; i < graphe->ordre; i++) {
-        int successeurs[graphe->ordre];
-        int nbSuccesseurs = 0;
-        int predesseurs[graphe->ordre];
-        int nbPredesseurs = 0;
+        populations_anterieures[i] = (float)Graphe_simu->pSommet[i]->N;
+    }
 
-        // Remplir les listes de successeurs et prédécesseurs
-        Successeur_Predecesseur(graphe, i, successeurs, &nbSuccesseurs, predesseurs, &nbPredesseurs);
+    // Appliquer les calculs pour chaque semaine
+    for (int t = 0; t < semaine; t++) {
+        for (int i = 0; i < graphe->ordre; i++) {
+            int successeurs[graphe->ordre];
+            int nbSuccesseurs = 0;
+            int predesseurs[graphe->ordre];
+            int nbPredesseurs = 0;
+
+            // Remplir les listes de successeurs et prédécesseurs
+            Successeur_Predecesseur(graphe, i, successeurs, &nbSuccesseurs, predesseurs, &nbPredesseurs);
 
 
-        float N_i = (float)Graphe_simu->pSommet[i]->N;  // Valeur initiale de N
-        float r_i = Graphe_simu->pSommet[i]->coef;    // Coefficient r (peut-être un autre paramètre de consommation)
-
-        // Sauvegarde de la population initiale
-        populations_anterieures[i] = N_i;
-
-        // Appliquer les calculs pour les semaines
-        for (int t = 0; t < semaine; t++) {
-
+            float N_i = populations_anterieures[i];  // Population initiale pour ce tour
+            float r_i = Graphe_simu->pSommet[i]->coef; // Coefficient de croissance
             float K_i = 0;
+
+            // Calcul de K_i à partir des prédécesseurs
             for (int j = 0; j < nbPredesseurs; j++) {
                 int pred = predesseurs[j];
                 parc arc_pred = Graphe_simu->pSommet[pred]->arc;
                 while (arc_pred != NULL) {
-                    if (arc_pred->sommet == i) {  // Si l'arc est dirigé vers i
-                        K_i += (float)Graphe_simu->pSommet[pred]->N * arc_pred->valeur;  // Multiplier N_j (valeur du prédécesseur) par le coefficient (poids de l'arc)
+                    if (arc_pred->sommet == i) {
+                        K_i += (float)Graphe_simu->pSommet[pred]->N * arc_pred->valeur;
                         break;
                     }
                     arc_pred = arc_pred->arc_suivant;
                 }
             }
-            // Assurer que K_i est non nul et qu'il est suffisamment grand
-            if (K_i < 0.0001) K_i = 0.0001;  // Bloquer K_i à une valeur minimale
 
-            // Vérifier que N_i / K_i < 1
-            if (N_i / K_i >= 1) {
-                K_i = N_i / 0.9999;  // Ajuster K_i pour qu'il soit supérieur à N_i
+            // Vérification des conditions de K_i
+            if (K_i < Kmin) {
+                K_i = fmax(Kmin, N_i * 0.1); // Eviter que K_i devienne trop petit et que cela fausse les calculs
             }
-            // Calcul de N_i en fonction des successeurs et prédécesseurs
-            if (nbSuccesseurs == 0) {  // Sommet est super-prédateur (n'a pas de successeur)
-                N_i += r_i * N_i * (1 - N_i / K_i) - N_i * CoefMortalite;  // L'équation pour un prédateur (prend en compte la mortalité)
-            }
-            else if (nbPredesseurs == 0) {  // Sommet est producteur (pas de prédateurs)
-                N_i += r_i * N_i * (1 - N_i / K_i) - SommePopMangee(predesseurs, nbPredesseurs, Graphe_simu, populations_anterieures);  // L'équation pour un producteur
-            }
-            else {  // Sommet est intermédiaire (a à la fois des prédateurs et des proies)
-                N_i += r_i * N_i * (1 - N_i / K_i) - SommePopMangee( predesseurs,nbPredesseurs, Graphe_simu, populations_anterieures);  // L'équation pour un sommet intermédiaire
+            if (N_i / K_i > 1) {
+                K_i = fmax(K_i, N_i); // Ajuster K_i de façon à éviter que la population dépasse la capacité
             }
 
-            // Vérification de N_i
-            if (N_i < 0) N_i = 0;  // S'assurer que N > 0
-            // Mise à jour de la valeur de N pour le sommet i
+
+
+            if (nbSuccesseurs == 0) {
+                N_i += r_i * N_i * (1 - (N_i / K_i)) - N_i * CoefMortalite;
+            } else if (nbPredesseurs == 0) {
+                N_i += r_i * N_i - SommePopMangee(successeurs, nbSuccesseurs, Graphe_simu, populations_anterieures,i);
+            } else {
+                N_i += r_i * N_i * (1 - (N_i / K_i)) - SommePopMangee(successeurs, nbSuccesseurs, Graphe_simu, populations_anterieures,i);
+            }
+
+            if (N_i < 0) N_i = 0;
+            if (N_i >= Nmax) N_i = Nmax;
             Graphe_simu->pSommet[i]->N = (int)N_i;
+        }
 
-            // Vérification de K_i
-            if (K_i < 0.0001) {
-                K_i = 0.0001;  // Bloquer K_i à une valeur minimale
-            }
-            populations_anterieures[i] = N_i;
+        // Mettre à jour les populations antérieures pour le prochain tour
+        for (int i = 0; i < graphe->ordre; i++) {
+            populations_anterieures[i] = (float)Graphe_simu->pSommet[i]->N;
         }
     }
 
@@ -307,10 +343,8 @@ Graphe* Copie_graphe(Graphe* graphe_initial) {
 void Successeur_Predecesseur(Graphe* graphe, int sommet, int* successeurs, int* nbSuccesseurs, int* predesseurs, int* nbPredesseurs) {
     *nbSuccesseurs = 0;
     *nbPredesseurs = 0;
-
     for (int i = 0; i < graphe->ordre; i++) {
         parc arc = graphe->pSommet[i]->arc;
-
         // Recherche des prédécesseurs
         while (arc != NULL) {
             if (arc->sommet == sommet) {
@@ -321,7 +355,6 @@ void Successeur_Predecesseur(Graphe* graphe, int sommet, int* successeurs, int* 
             arc = arc->arc_suivant;
         }
     }
-
     // Recherche des successeurs
     parc arc = graphe->pSommet[sommet]->arc; // Partir des arcs du sommet donné
     while (arc != NULL) {
@@ -331,22 +364,15 @@ void Successeur_Predecesseur(Graphe* graphe, int sommet, int* successeurs, int* 
     }
 }
 
-float SommePopMangee(int* predecesseurs, int nbPredesseurs, Graphe* graphe, float* populations) {
-    float somme = 0.0;
-
-    // Parcourir chaque prédécesseur (prédateur)
-    for (int i = 0; i < nbPredesseurs; i++) {
-        int pred = predecesseurs[i];
-        parc arc = graphe->pSommet[pred]->arc;
-
-        // Parcourir les arcs sortants de ce prédateur
-        while (arc != NULL) {
-            // Ajouter la population consommée par ce prédateur
-            somme += arc->valeur * populations[pred];
+float SommePopMangee(int* successeurs, int nbSuccesseurs, Graphe* graphe, float* populations,int Sommetactuel) {
+    float somme = 0;
+    parc arc = graphe->pSommet[Sommetactuel]->arc;
+    for (int i = 0; i < nbSuccesseurs; i++) {
+        if(arc!=NULL) {
+            somme += arc->valeur * populations[arc->sommet];
             arc = arc->arc_suivant;
         }
     }
-
     return somme;
 }
 
@@ -354,9 +380,10 @@ float SommePopMangee(int* predecesseurs, int nbPredesseurs, Graphe* graphe, floa
 
 
 
+
 void Afficher_N(Graphe* graphe) {
     for (int i = 0; i < graphe->ordre; i++) {
-        printf("Sommet %d : N = %d\n", i, graphe->pSommet[i]->N);
+        printf("%s : N = %d\n", graphe->pSommet[i]->nom, graphe->pSommet[i]->N);
     }
 }
 
@@ -524,132 +551,76 @@ void Analyse(Graphe* graphe) {
         printf("6. Estimer l importance d une espece (centralite)\n");
         printf("7. Retourner en arriere\n");
         printf("Votre choix : ");
+        printf("\033[0m");
         scanf("%d", &choix);
+        printf("\033[0;35m");
 
         switch (choix) {
             case 1:
+                system("cls");
                 printf("\nVerification de la connexite...\n");
+                printf("\033[0m");
                 connexite(graphe);
-                //verifier_connexite(graphe);
+                printf("\033[0;35m");
                 break;
             case 2:
+                system("cls");
                 printf("\nAffichage des derniers maillons...\n");
+                printf("\033[0m");
                 spredateurs(graphe);
-                //afficher_dernieres_maillons(graphe);
+                printf("\033[0;35m");
                 break;
             case 3:
+                system("cls");
                 printf("\nAffichage des especes avec une seule source de nourriture...\n");
+                printf("\033[0m");
                 unesource(graphe);
-                //afficher_especes_une_source(graphe);
+                printf("\033[0;35m");
                 break;
             case 4:
+                system("cls");
                 printf("\nAffichage du reseau trophique...\n");
+                printf("\033[0m");
                 liaisonniv(graphe);
-                //afficher_reseau_trophique(graphe);
+                printf("\033[0;35m");
                 break;
             case 5:
+                system("cls");
                 printf("\nSimulation de la disparition d une espece...\n");
-                //simuler_disparition(graphe);
+                int reponse;
+                for(int i=0;i<graphe->ordre;i++){
+                    printf("%d : %s\n",i,graphe->pSommet[i]->nom);
+                }
+                printf("Voici la liste des especes, Laquel voulez vous faire disparaitre :\n");
+                printf("\033[0m");
+                scanf("%d",&reponse);
+                printf("\033[0;35m");
+                if(reponse>=0 && reponse<graphe->ordre){
+                    Graphe* Graphe_simu = Copie_graphe(graphe);
+                    Graphe_simu->pSommet[reponse]->N=0;
+                    Simu(Graphe_simu);
+                }
+                else{
+                    printf("ce sommet n existe pas \n");
+                }
+                system("cls");
                 break;
             case 6:
-                printf("\nEstimation de l importance d'une espece...\n");
+                system("cls");
+                printf("\nEstimation de l importance d une espece...\n");
+                printf("\033[0m");
                 centralite(graphe);
-                //mesurer_centralite(graphe);
+                printf("\033[0;35m");
                 break;
             case 7:
+                system("cls");
                 printf("\nRetour au menu principal...\n");
                 break;
             default:
-                printf("\nChoix invalide. Veuillez réessayer.\n");
+                printf("\nChoix invalide. Veuillez reessayer.\n");
         }
     } while (choix != 7);
 }
-void spredateurs(Graphe* graphe) {
-    printf("\nAnimaux sans predateurs (super-predateurs) :\n");
-    bool trouve = false;
-    // parcours de chaque sommet
-    for (int i = 0; i < graphe->ordre; i++) {
-        bool a_une_proie = false;
-        // verification des arcs sortants 
-        for (int j = 0; j < graphe->ordre; j++) {
-            if (graphe->capacite[i][j] > 0) { // verifie les arcs sortants pour chaque sommet
-                a_une_proie = true;
-                break;
-            }
-        }
-
-        // Si aucune proie trouvée (ligne entièrement 0), c'est un super-predateur
-        if (!a_une_proie) {
-            printf("- %s\n", graphe->pSommet[i]->nom);
-            trouve = true;
-        }
-    }
-
-    if (!trouve) {
-        printf("Aucun super-predateur trouve.\n");
-    }
-    printf("\n");
-}
-// Fonction qui vérifie les espèces ayant une seule source de nourriture 
-void unesource(Graphe* graphe) {
-    printf("\nEspeces ayant une seule source de nourriture :\n");
-
-    // verifier chaque sommet pour ses arcs entrants
-    for (int i = 0; i < graphe->ordre; i++) {
-        int nb_sources = 0; // compteur pour les arcs entrants
-
-        // parcours des arcs entrants 
-        for (int j = 0; j < graphe->ordre; j++) {
-            parc arc = graphe->pSommet[j]->arc;
-            while (arc != NULL) {
-                if (arc->sommet == i) { // si l'arc pointe vers le sommet i
-                    nb_sources++;
-                    break; 
-                }
-                arc = arc->arc_suivant;
-            }
-        }
-        // si une espèce a exactement une source de nourriture 
-        if (nb_sources == 1) {
-            printf("- %s\n", graphe->pSommet[i]->nom);
-        }
-    }
-}
-// Fonction pour calculer le niveau trophique d'un sommet
-int calculer_niveau(Graphe* graphe, int* niveaux, int index) {
-    if (niveaux[index] > 0) {
-        return niveaux[index]; // si deja calcule retourner le niveau
-    }
-    int unpredateur = 0;
-    int uneproie = 0;
-    // verifier les predateurs 
-    for (int i = 0; i < graphe->ordre; i++) {
-        parc pred = graphe->pSommet[i]->arc;
-        while (pred) {
-            if (pred->sommet == index) {
-                unpredateur = 1; 
-                break;
-            }
-            pred = pred->arc_suivant;
-        }
-        if (unpredateur) break;
-    }
-    parc arc = graphe->pSommet[index]->arc;
-    if (arc) {
-        uneproie = 1;
-    }
-    if (unpredateur && !uneproie) {
-        niveaux[index] = 3;
-    } else if (unpredateur && uneproie) {
-        niveaux[index] = 2;
-    } else if (!unpredateur && uneproie) {
-        niveaux[index] = 1; 
-    } else {
-        niveaux[index] = -1; //sommet isole
-    }
-    return niveaux[index];
-}
-// Fonction pour afficher les liaisons avec niveaux trophiques
 void liaisonniv(Graphe* graphe) {
     int ordre = graphe->ordre;
     int niveaux[ordre];
@@ -677,6 +648,93 @@ void liaisonniv(Graphe* graphe) {
         printf("\n");
     }
 }
+
+int calculer_niveau(Graphe* graphe, int* niveaux, int index) {
+    if (niveaux[index] > 0) {
+        return niveaux[index]; // si deja calcule retourner le niveau
+    }
+    int unpredateur = 0;
+    int uneproie = 0;
+    // verifier les predateurs
+    for (int i = 0; i < graphe->ordre; i++) {
+        parc pred = graphe->pSommet[i]->arc;
+        while (pred) {
+            if (pred->sommet == index) {
+                unpredateur = 1;
+                break;
+            }
+            pred = pred->arc_suivant;
+        }
+        if (unpredateur) break;
+    }
+    parc arc = graphe->pSommet[index]->arc;
+    if (arc) {
+        uneproie = 1;
+    }
+    if (unpredateur && !uneproie) {
+        niveaux[index] = 3;
+    } else if (unpredateur && uneproie) {
+        niveaux[index] = 2;
+    } else if (!unpredateur && uneproie) {
+        niveaux[index] = 1;
+    } else {
+        niveaux[index] = -1; //sommet isole
+    }
+    return niveaux[index];
+}
+
+void unesource(Graphe* graphe) {
+    printf("\nEspeces ayant une seule source de nourriture :\n");
+
+    // verifier chaque sommet pour ses arcs entrants
+    for (int i = 0; i < graphe->ordre; i++) {
+        int nb_sources = 0; // compteur pour les arcs entrants
+
+        // parcours des arcs entrants
+        for (int j = 0; j < graphe->ordre; j++) {
+            parc arc = graphe->pSommet[j]->arc;
+            while (arc != NULL) {
+                if (arc->sommet == i) { // si l'arc pointe vers le sommet i
+                    nb_sources++;
+                    break;
+                }
+                arc = arc->arc_suivant;
+            }
+        }
+        // si une espèce a exactement une source de nourriture
+        if (nb_sources == 1) {
+            printf("- %s\n", graphe->pSommet[i]->nom);
+        }
+    }
+}
+
+void spredateurs(Graphe* graphe) {
+    printf("\nAnimaux sans predateurs (super-predateurs) :\n");
+    bool trouve = false;
+    // parcours de chaque sommet
+    for (int i = 0; i < graphe->ordre; i++) {
+        bool a_une_proie = false;
+        // verification des arcs sortants
+        for (int j = 0; j < graphe->ordre; j++) {
+            if (graphe->capacite[i][j] > 0) { // verifie les arcs sortants pour chaque sommet
+                a_une_proie = true;
+                break;
+            }
+        }
+
+        // Si aucune proie trouvée (ligne entièrement 0), c'est un super-predateur
+        if (!a_une_proie) {
+            printf("- %s\n", graphe->pSommet[i]->nom);
+            trouve = true;
+        }
+    }
+
+    if (!trouve) {
+        printf("Aucun super-predateur trouve.\n");
+    }
+    printf("\n");
+}
+
 void lireFichier2(Graphe* graphe) {
     if (!graphe) {
         printf("Erreur : graphe inexistant.\n");
@@ -717,9 +775,11 @@ void connexite(Graphe* graphe) {
         return;
     }
     // Convertir le graphe en non orienté
-    lireFichier2(graphe);
-    bool* visites = (bool*)calloc(graphe->ordre, sizeof(bool));
-    int* file = (int*)malloc(graphe->ordre * sizeof(int));
+    Graphe* Graphe_copie = Copie_graphe(graphe);
+
+    lireFichier2(Graphe_copie);
+    bool* visites = (bool*)calloc(Graphe_copie->ordre, sizeof(bool));
+    int* file = (int*)malloc(Graphe_copie->ordre * sizeof(int));
     int debut = 0, fin = 0;
     // Initialiser BFS à partir du premier sommet
     visites[0] = true;
@@ -727,7 +787,7 @@ void connexite(Graphe* graphe) {
     while (debut < fin) {
         int sommet = file[debut++];
         // Parcourir les voisins du sommet actuel
-        for (parc arc = graphe->pSommet[sommet]->arc; arc != NULL; arc = arc->arc_suivant) {
+        for (parc arc = Graphe_copie->pSommet[sommet]->arc; arc != NULL; arc = arc->arc_suivant) {
             if (!visites[arc->sommet]) {
                 visites[arc->sommet] = true;
                 file[fin++] = arc->sommet;
@@ -736,7 +796,7 @@ void connexite(Graphe* graphe) {
     }
     // Vérifier si tous les sommets ont été visités
     bool connexe = true;
-    for (int i = 0; i < graphe->ordre; i++) {
+    for (int i = 0; i < Graphe_copie->ordre; i++) {
         if (!visites[i]) {
             connexe = false;
             break;
@@ -749,6 +809,7 @@ void connexite(Graphe* graphe) {
     }
     free(visites);
     free(file);
+    liberer_graphe(Graphe_copie);
 }
 
 void centralite(Graphe* graphe) {
@@ -784,12 +845,3 @@ void centralite(Graphe* graphe) {
     }
     free(degres);
 }
-
-
-
-
-
-
-
-
-
