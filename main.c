@@ -13,6 +13,7 @@ int main() {
     int choix;
 
     while (1) {
+        printf("\033[0;35m");
         // Afficher le titre en "3D"
         dessiner_ligne(largeur_console, '=');
         afficher_titre_3D();
@@ -29,7 +30,9 @@ int main() {
 
         // Saisie du choix
         printf("Entrez votre choix : ");
+        printf("\033[0m");
         scanf("%d", &choix);
+        printf("\033[0;35m");
 
         if (choix == 4) {
             break;
@@ -55,7 +58,9 @@ int main() {
         }
 
         // Lecture du graphe
+        printf("\033[0m");
         g = lireFichier(nom_fichier);
+        printf("\033[0;35m");
         if (!g) {
             printf("Erreur lors de la lecture du graphe.\n");
             continue;
@@ -63,6 +68,7 @@ int main() {
 
         while (1) {
             // Menu des actions
+            printf("\033[0;35m");
             dessiner_ligne(largeur_console, '-');
             afficher_centre("Que voulez-vous faire ?", largeur_console);
             dessiner_ligne(largeur_console, '-');
@@ -71,10 +77,14 @@ int main() {
             afficher_centre("3 : Revenir au menu principal", largeur_console);
             printf("\n");
 
+
             // Saisie du choix
             printf("Entrez votre choix : ");
+            printf("\033[0m");
             scanf("%d", &choix);
+            printf("\033[0;35m");
             system("cls");
+
             if (choix == 3) {
                 liberer_graphe(g);
                 g = NULL;
@@ -91,6 +101,9 @@ int main() {
                     printf("\nAnalyse du graphe\n");
                     Analyse(g);
                     break;
+                case 3:
+                    printf("\nSource\n");
+                    //source
                 default:
                     printf("Cette option n'existe pas\n");
             }
