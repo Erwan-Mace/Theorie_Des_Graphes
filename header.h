@@ -56,4 +56,7 @@ void unesource(Graphe* graphe);
 void liaisonniv(Graphe* graphe);
 int calculer_niveau(Graphe* graphe, int* niveaux, int index);
 void spredateurs(Graphe* graphe);
+void centralite(Graphe* graphe);
+void connexite(Graphe* graphe);
+void lireFichier2(Graphe* graphe);
 #endif //CODE_BASE_PROJET_HEADER_H
