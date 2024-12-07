@@ -529,6 +529,7 @@ void Analyse(Graphe* graphe) {
         switch (choix) {
             case 1:
                 printf("\nVerification de la connexite...\n");
+                connexite(graphe);
                 //verifier_connexite(graphe);
                 break;
             case 2:
@@ -552,6 +553,7 @@ void Analyse(Graphe* graphe) {
                 break;
             case 6:
                 printf("\nEstimation de l importance d'une espece...\n");
+                centralite(graphe);
                 //mesurer_centralite(graphe);
                 break;
             case 7:
@@ -675,8 +677,113 @@ void liaisonniv(Graphe* graphe) {
         printf("\n");
     }
 }
+void lireFichier2(Graphe* graphe) {
+    if (!graphe) {
+        printf("Erreur : graphe inexistant.\n");
+        return;
+    }
+    for (int i = 0; i < graphe->ordre; i++) {
+        for (int j = 0; j < graphe->ordre; j++) {
+            if (graphe->capacite[i][j] > 0) {
+                // Assurer que la capacité est symétrique
+                graphe->capacite[j][i] = graphe->capacite[i][j];
+                // Ajouter l'arc opposé dans la liste des arcs
+                parc arc_courant = graphe->pSommet[j]->arc;
+                bool arc_existe = false;
+                // Vérifier si l'arc opposé existe déjà
+                while (arc_courant != NULL) {
+                    if (arc_courant->sommet == i) {
+                        arc_existe = true;
+                        break;
+                    }
+                    arc_courant = arc_courant->arc_suivant;
+                }
+                // Ajouter l'arc si inexistant
+                if (!arc_existe) {
+                    parc nouvel_arc = (parc)malloc(sizeof(struct arc));
+                    nouvel_arc->sommet = i;
+                    nouvel_arc->valeur = graphe->capacite[j][i];
+                    nouvel_arc->arc_suivant = graphe->pSommet[j]->arc;
+                    graphe->pSommet[j]->arc = nouvel_arc;
+                }
+            }
+        }
+    }
+}
 
+void connexite(Graphe* graphe) {
+    if (graphe == NULL) {
+        printf("Le graphe est vide.\n");
+        return;
+    }
+    // Convertir le graphe en non orienté
+    lireFichier2(graphe);
+    bool* visites = (bool*)calloc(graphe->ordre, sizeof(bool));
+    int* file = (int*)malloc(graphe->ordre * sizeof(int));
+    int debut = 0, fin = 0;
+    // Initialiser BFS à partir du premier sommet
+    visites[0] = true;
+    file[fin++] = 0;
+    while (debut < fin) {
+        int sommet = file[debut++];
+        // Parcourir les voisins du sommet actuel
+        for (parc arc = graphe->pSommet[sommet]->arc; arc != NULL; arc = arc->arc_suivant) {
+            if (!visites[arc->sommet]) {
+                visites[arc->sommet] = true;
+                file[fin++] = arc->sommet;
+            }
+        }
+    }
+    // Vérifier si tous les sommets ont été visités
+    bool connexe = true;
+    for (int i = 0; i < graphe->ordre; i++) {
+        if (!visites[i]) {
+            connexe = false;
+            break;
+        }
+    }
+    if (connexe) {
+        printf("Le graphe est connexe.\n");
+    } else {
+        printf("Le graphe n'est pas connexe.\n");
+    }
+    free(visites);
+    free(file);
+}
 
+void centralite(Graphe* graphe) {
+    // Tableau pour stocker le nombre de liaisons (degré) pour chaque espèce
+    int* degres = (int*)calloc(graphe->ordre, sizeof(int));
+    // Calculer le degré de chaque sommet (espèce)
+    for (int i = 0; i < graphe->ordre; i++) {
+        parc arc = graphe->pSommet[i]->arc;
+        while (arc != NULL) {
+            degres[i]++; // Chaque arc entrant compte comme un lien pour cette espèce
+            arc = arc->arc_suivant;
+        }
+    }
+    // Tri des sommets par leur nombre de liaisons, de manière décroissante
+    for (int i = 0; i < graphe->ordre - 1; i++) {
+        for (int j = i + 1; j < graphe->ordre; j++) {
+            if (degres[i] < degres[j]) {
+                // Échange les degrés
+                int temp = degres[i];
+                degres[i] = degres[j];
+                degres[j] = temp;
+                // Échange les noms des sommets (espèces)
+                char* temp_nom = graphe->pSommet[i]->nom;
+                graphe->pSommet[i]->nom = graphe->pSommet[j]->nom;
+                graphe->pSommet[j]->nom = temp_nom;
+            }
+        }
+    }
+    // Afficher les espèces avec le plus grand nombre de liaisons
+    printf("Centralite de degre (especes les plus connectees) :\n");
+    for (int i = 0; i < graphe->ordre; i++) {
+        printf("- %s : %d liaisons\n", graphe->pSommet[i]->nom, degres[i]);
+    }
+    free(degres);
+}
 
 
 
