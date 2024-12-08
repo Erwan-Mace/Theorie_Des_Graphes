@@ -25,7 +25,8 @@ int main() {
         afficher_centre("1 : Mer", largeur_console);
         afficher_centre("2 : Foret", largeur_console);
         afficher_centre("3 : Savane", largeur_console);
-        afficher_centre("4 : Quitter", largeur_console);
+        afficher_centre("4 : ecosysteme sauvegarde", largeur_console);
+        afficher_centre("5 : Quitter", largeur_console);
         printf("\n");
 
         // Saisie du choix
@@ -34,7 +35,7 @@ int main() {
         scanf("%d", &choix);
         printf("\033[0;35m");
 
-        if (choix == 4) {
+        if (choix == 5) {
             break;
         }
 
@@ -51,6 +52,11 @@ int main() {
             case 3:
                 printf("\nEcosysteme choisi : Savane\n");
                 strcpy(nom_fichier, "Savane");
+                break;
+            case 4:
+                printf("\nEcosysteme sauvegarde : veuillez rentrer son nom\n");
+                scanf("%s",&*nom_fichier);
+
                 break;
             default:
                 printf("Nous n avons pas d ecosysteme pour un tel numero\n");
