@@ -68,17 +68,17 @@ Graphe* lireFichier(char* nomFichier) {
     }
     for (int i = 0; i < ordre; i++) {
         fscanf(ifs, " %f", &coef_temp);
-        graphe->pSommet[i]->coef= coef_temp; //Nb population
+        graphe->pSommet[i]->coef= coef_temp; //nb population
     }
     for (int i = 0; i < ordre; i++) {
         fscanf(ifs, " %d", &N_temp);
-        graphe->pSommet[i]->N = N_temp; //Nb population
+        graphe->pSommet[i]->N = N_temp; //nb population
     }
     fclose(ifs);
     return graphe;
 }
 
-// Fonction pour afficher les liaisons et les poids
+//fonction pour afficher les liaisons et les poids
 void liaisons(Graphe* graphe) {
     printf("\nVerification des liaisons entre les noeuds :\n");
 
@@ -86,7 +86,7 @@ void liaisons(Graphe* graphe) {
         printf("Liaisons pour %s : ", graphe->pSommet[i]->nom);
         bool liaison_existe = false;
 
-        // Parcours des arcs sortants
+        //parcours des arcs sortants
         for (parc arc = graphe->pSommet[i]->arc; arc != NULL; arc = arc->arc_suivant) {
             if (liaison_existe) {
                 printf(", ");
@@ -123,7 +123,7 @@ void Simu(Graphe* graphe) {
     int semaine = 0;
     int touche;
     bool simulation = true;
-    Graphe* graphe_actualiser = Copie_graphe(graphe); // Initialiser avec une copie du graphe original
+    Graphe* graphe_actualiser = Copie_graphe(graphe); // initialiser avec une copie du graphe original
 
     printf("Affichage graphe semaine %d\n", semaine);
     printf("\033[0m");
@@ -136,15 +136,15 @@ void Simu(Graphe* graphe) {
     printf("\033[0m");
     while (simulation) {
         _sleep(400);
-        if (_kbhit()) { // Vérifie si une touche est appuyée
+        if (_kbhit()) { // verifie si une touche est appuyee
             touche = _getch();
             if (touche == 224) {
                 touche = _getch();
                 if (touche == 72) {
-                    simulation = false; // Fin
+                    simulation = false; // fin
                     printf("\nFin de la simulation\n");
                 } else if (touche == 75) {
-                    // Flèche gauche
+                    // fleche gauche
                     if (semaine <= 0) {
                         printf("\nOn ne peut pas avoir de graphe avant semaine 0\n");
                     } else {
@@ -152,8 +152,8 @@ void Simu(Graphe* graphe) {
                         printf("\033[0;35m");
                         printf("\nAffichage graphe semaine %d\n", semaine);
                         printf("\033[0m");
-                        liberer_graphe(graphe_actualiser); // Libérer l'ancien graphe
-                        graphe_actualiser = Graphe_semaine(graphe, semaine); // Créer un nouveau graphe
+                        liberer_graphe(graphe_actualiser); // liberer l'ancien graphe
+                        graphe_actualiser = Graphe_semaine(graphe, semaine); // creer un nouveau graphe
                         Afficher_N(graphe_actualiser);
                         ecrireFichier(graphe_actualiser, "grapheActuel");
                         const char *fichier_dot = "graphe.dot";
@@ -167,13 +167,13 @@ void Simu(Graphe* graphe) {
                         printf("\033[0m");
                     }
                 } else if (touche == 77) {
-                    // Flèche droite
+                    // flèche droite
                     semaine += 1;
                     printf("\033[0;35m");
                     printf("\nAffichage graphe semaine %d\n", semaine);
                     printf("\033[0m");
-                    liberer_graphe(graphe_actualiser); // Libérer l'ancien graphe
-                    graphe_actualiser = Graphe_semaine(graphe, semaine); // Créer un nouveau graphe
+                    liberer_graphe(graphe_actualiser); // libérer l'ancien graphe
+                    graphe_actualiser = Graphe_semaine(graphe, semaine); // créer un nouveau graphe
                     Afficher_N(graphe_actualiser);
                     ecrireFichier(graphe_actualiser, "grapheActuel");
                     const char *fichier_dot = "graphe.dot";
@@ -186,7 +186,7 @@ void Simu(Graphe* graphe) {
                            "fleche droite : sauvegarde le graphe actuel\n");
                     printf("\033[0m");
                 } else if (touche == 80) {
-                    // Flèche bas
+                    // flèche bas
                     char nom[50];
                     printf("\033[0;35m");
                     printf("\nDonnez le noms de la sauvegarde du graphe :\n");
@@ -205,7 +205,7 @@ void Simu(Graphe* graphe) {
             }
         }
     }
-    liberer_graphe(graphe_actualiser); // Libérer la mémoire du graphe actualisé
+    liberer_graphe(graphe_actualiser); // libérer la mémoire du graphe actualisé
 }
 
 
@@ -214,13 +214,13 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
     float* populations_anterieures = malloc(graphe->ordre * sizeof(float));
     int Pmax[graphe->ordre];
 
-    // Initialisation des populations antérieures et création de Pmax
+    // initialisation des populations antérieures et création de Pmax
     for (int i = 0; i < graphe->ordre; i++) {
         populations_anterieures[i] = (float)Graphe_simu->pSommet[i]->N;
-        Pmax[i] = Graphe_simu->pSommet[i]->N * 20; // 1000 % de la population initiale
+        Pmax[i] = Graphe_simu->pSommet[i]->N * 20;
     }
 
-    // Appliquer les calculs pour chaque semaine
+    // appliquer les calculs pour chaque semaine
     for (int t = 0; t < semaine; t++) {
         for (int i = 0; i < graphe->ordre; i++) {
             int successeurs[graphe->ordre];
@@ -228,14 +228,14 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
             int predesseurs[graphe->ordre];
             int nbPredesseurs = 0;
 
-            // Remplir les listes de successeurs et prédécesseurs
+            // remplir les listes de successeurs et prédécesseurs
             Successeur_Predecesseur(graphe, i, successeurs, &nbSuccesseurs, predesseurs, &nbPredesseurs);
 
-            float N_i = populations_anterieures[i]; // Population actuelle
-            float r_i = Graphe_simu->pSommet[i]->coef; // Coefficient de croissance
+            float N_i = populations_anterieures[i]; // population actuelle
+            float r_i = Graphe_simu->pSommet[i]->coef; // coefficient de croissance
             float K_i = 0; // Capacité de charge
 
-            // Calcul de K_i à partir des prédécesseurs
+            // calcul de K_i à partir des prédécesseurs
             for (int j = 0; j < nbPredesseurs; j++) {
                 int pred = predesseurs[j];
                 parc arc_pred = Graphe_simu->pSommet[pred]->arc;
@@ -248,38 +248,38 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
                 }
             }
 
-            // Ajustements de K_i pour éviter des anomalies
+            // ajustements de K_i pour éviter des anomalies
             if (K_i < Kmin) {
-                K_i = fmax(Kmin, N_i * 0.1); // Kmin ou 10 % de N_i
+                K_i = fmax(Kmin, N_i * 0.1); // K minimal 
             }
             if (N_i / K_i > 1) {
-                K_i = fmax(K_i, N_i); // Ajustement pour éviter dépassement
+                K_i = fmax(K_i, N_i); // ajustement pour éviter dépassement
             }
 
-            // Calcul de la population en fonction des conditions
+            // calcul de la population en fonction des conditions
             if (nbSuccesseurs == 0) {
-                N_i += r_i * N_i * (1 - (N_i / K_i)); // Croissance de type logistique
-                N_i -= N_i * CoefMortalite;          // Effet de mortalité
+                N_i += r_i * N_i * (1 - (N_i / K_i)); // croissance de type logistique
+                N_i -= N_i * CoefMortalite;          // coef mortalité
             } else if (nbPredesseurs == 0) {
-                N_i += r_i * N_i; // Croissance exponentielle
+                N_i += r_i * N_i; // croissance exponentielle
                 N_i -= SommePopMangee(successeurs, nbSuccesseurs, Graphe_simu, populations_anterieures, i); // Prédation
             } else {
-                N_i += r_i * N_i * (1 - (N_i / K_i)); // Croissance logistique
+                N_i += r_i * N_i * (1 - (N_i / K_i)); // croissance logistique
                 N_i -= SommePopMangee(successeurs, nbSuccesseurs, Graphe_simu, populations_anterieures, i); // Prédation
             }
 
-            // Appliquer l'effet de Pmax sur la croissance
+            // appliquer l'effet de Pmax sur la croissance
             if (N_i > Pmax[i]) {
-                N_i -= r_i * N_i * ((N_i - Pmax[i]) / Pmax[i]); // Diminution progressive
+                N_i -= r_i * N_i * ((N_i - Pmax[i]) / Pmax[i]); // diminution progressive
             }
 
-            // Vérifications finales
-            if (N_i < 0) N_i = 0;         // Éviter les valeurs négatives
+            // vérifications finales
+            if (N_i < 0) N_i = 0;         // eviter les valeurs négatives
 
             Graphe_simu->pSommet[i]->N = (int)N_i; // Mise à jour dans le graphe simulé
         }
 
-        // Mettre à jour les populations pour la prochaine semaine
+        // mettre à jour les populations pour la prochaine semaine
         for (int i = 0; i < graphe->ordre; i++) {
             populations_anterieures[i] = (float)Graphe_simu->pSommet[i]->N;
         }
@@ -295,7 +295,7 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
 
 Graphe* Copie_graphe(Graphe* graphe_initial) {
     if (!graphe_initial) {
-        return NULL; // Si le graphe initial est nul, retourne NULL.
+        return NULL; // si le graphe initial est nul, retourne NULL.
     }
 
     Graphe* grapheCopie = (Graphe*)malloc(sizeof(Graphe));
@@ -355,7 +355,7 @@ void Successeur_Predecesseur(Graphe* graphe, int sommet, int* successeurs, int* 
     *nbPredesseurs = 0;
     for (int i = 0; i < graphe->ordre; i++) {
         parc arc = graphe->pSommet[i]->arc;
-        // Recherche des prédécesseurs
+        // recherche des prédécesseurs
         while (arc != NULL) {
             if (arc->sommet == sommet) {
                 predesseurs[*nbPredesseurs] = i;
@@ -365,10 +365,10 @@ void Successeur_Predecesseur(Graphe* graphe, int sommet, int* successeurs, int* 
             arc = arc->arc_suivant;
         }
     }
-    // Recherche des successeurs
-    parc arc = graphe->pSommet[sommet]->arc; // Partir des arcs du sommet donné
+    // recherche des successeurs
+    parc arc = graphe->pSommet[sommet]->arc; // partir des arcs du sommet donné
     while (arc != NULL) {
-        successeurs[*nbSuccesseurs] = arc->sommet; // Ajouter le sommet destination comme successeur
+        successeurs[*nbSuccesseurs] = arc->sommet; // ajouter le sommet destination comme successeur
         (*nbSuccesseurs)++;
         arc = arc->arc_suivant;
     }
@@ -404,16 +404,16 @@ void ecrireFichier(const Graphe* graphe, const char* nomFichier) {
         return;
     }
 
-    // Écrire l'ordre du graphe
+    // ecrire l ordre du graphe
     fprintf(ofs, "%d\n", graphe->ordre);
 
-    // Écrire les noms des sommets
+    // ecrire les noms des sommet
     for (int i = 0; i < graphe->ordre; i++) {
         fprintf(ofs, "%s ", graphe->pSommet[i]->nom);
     }
     fprintf(ofs, "\n");
 
-    // Écrire la matrice des capacités
+    // ecrire la matrice des capacites
     for (int i = 0; i < graphe->ordre; i++) {
         for (int j = 0; j < graphe->ordre; j++) {
             fprintf(ofs, "%d ", (int)graphe->capacite[i][j]);
@@ -421,13 +421,13 @@ void ecrireFichier(const Graphe* graphe, const char* nomFichier) {
         fprintf(ofs, "\n");
     }
 
-    // Écrire les coefficients de croissance
+    // ecrire les coefficient de croissance
     for (int i = 0; i < graphe->ordre; i++) {
         fprintf(ofs, "%.4f ", graphe->pSommet[i]->coef);
     }
     fprintf(ofs, "\n");
 
-    // Écrire les populations initiales
+    // ecrire les populations initiales
     for (int i = 0; i < graphe->ordre; i++) {
         fprintf(ofs, "%d ", graphe->pSommet[i]->N);
     }
@@ -461,7 +461,7 @@ void creer_dot(const char *fichier_texte, const char *fichier_dot) {
 
     fprintf(f_dot, "digraph G {\n");
 
-    // Lire la matrice d'adjacence
+    // lire la matrice d'adjacence
     float poids;
     for (int i = 0; i < nb_sommets; i++) {
         for (int j = 0; j < nb_sommets; j++) {
@@ -472,12 +472,12 @@ void creer_dot(const char *fichier_texte, const char *fichier_dot) {
         }
     }
 
-    // Ignorer la ligne des taux de croissance
+    // ignorer la ligne des taux de croissance
     for (int i = 0; i < nb_sommets; i++) {
         fscanf(f_texte, "%f", &poids);
     }
 
-    // Lire la ligne des populations initiales et l'ajouter aux nœuds
+    // lire la ligne des populations initiales et l'ajouter aux nœuds
     float population_initiale[nb_sommets];
     for (int i = 0; i < nb_sommets; i++) {
         fscanf(f_texte, "%f", &population_initiale[i]);
@@ -491,7 +491,7 @@ void creer_dot(const char *fichier_texte, const char *fichier_dot) {
 
     printf("Le fichier DOT est genere : %s\n", fichier_dot);
 }
-// Fonction pour afficher le graphe sous forme d'image PNG
+// fonction pour afficher le graphe sous forme d'image PNG
 void  afficher_graphe_png(const char *fichier_dot) {
     char commande[200];
     char fichier_png[100];
@@ -526,7 +526,7 @@ void afficher_centre(const char* texte, int largeur_console) {
     printf("%s\n", texte);
 }
 
-// Fonction pour dessiner une ligne horizontale
+// fonction pour dessiner une ligne horizontale
 void dessiner_ligne(int largeur_console, char caractere) {
     for (int i = 0; i < largeur_console; i++) {
         printf("%c", caractere);
@@ -751,12 +751,12 @@ void lireFichier2(Graphe* graphe) {
     for (int i = 0; i < graphe->ordre; i++) {
         for (int j = 0; j < graphe->ordre; j++) {
             if (graphe->capacite[i][j] > 0) {
-                // Assurer que la capacité est symétrique
+                // assurer que la capacite est symetrique
                 graphe->capacite[j][i] = graphe->capacite[i][j];
-                // Ajouter l'arc opposé dans la liste des arcs
+                // ajouter l arc opposé dans la liste des arcs
                 parc arc_courant = graphe->pSommet[j]->arc;
                 bool arc_existe = false;
-                // Vérifier si l'arc opposé existe déjà
+                // vérifier si l arc oppose existe deja
                 while (arc_courant != NULL) {
                     if (arc_courant->sommet == i) {
                         arc_existe = true;
@@ -764,7 +764,7 @@ void lireFichier2(Graphe* graphe) {
                     }
                     arc_courant = arc_courant->arc_suivant;
                 }
-                // Ajouter l'arc si inexistant
+                // ajouter l'arc si inexistant
                 if (!arc_existe) {
                     parc nouvel_arc = (parc)malloc(sizeof(struct arc));
                     nouvel_arc->sommet = i;
@@ -782,19 +782,19 @@ void connexite(Graphe* graphe) {
         printf("Le graphe est vide.\n");
         return;
     }
-    // Convertir le graphe en non orienté
+    // convertir le graphe en non orienté
     Graphe* Graphe_copie = Copie_graphe(graphe);
 
     lireFichier2(Graphe_copie);
     bool* visites = (bool*)calloc(Graphe_copie->ordre, sizeof(bool));
     int* file = (int*)malloc(Graphe_copie->ordre * sizeof(int));
     int debut = 0, fin = 0;
-    // Initialiser BFS à partir du premier sommet
+    // initialiser notre BFS a partir du premier sommet
     visites[0] = true;
     file[fin++] = 0;
     while (debut < fin) {
         int sommet = file[debut++];
-        // Parcourir les voisins du sommet actuel
+        // parcourir les voisin du sommet actuel
         for (parc arc = Graphe_copie->pSommet[sommet]->arc; arc != NULL; arc = arc->arc_suivant) {
             if (!visites[arc->sommet]) {
                 visites[arc->sommet] = true;
@@ -802,7 +802,7 @@ void connexite(Graphe* graphe) {
             }
         }
     }
-    // Vérifier si tous les sommets ont été visités
+    // vérifier si tous les sommets ont ete visites
     bool connexe = true;
     for (int i = 0; i < Graphe_copie->ordre; i++) {
         if (!visites[i]) {
@@ -821,32 +821,32 @@ void connexite(Graphe* graphe) {
 }
 
 void centralite(Graphe* graphe) {
-    // Tableau pour stocker le nombre de liaisons pour chaque espèce
+    // tableau pour stocker le nombre de liaisons pour chaque espèce
     int* degres = (int*)calloc(graphe->ordre, sizeof(int));
-    // Calculer le degré de chaque sommet (espèce)
+    // calculer le degré de chaque sommet (espèce)
     for (int i = 0; i < graphe->ordre; i++) {
         parc arc = graphe->pSommet[i]->arc;
         while (arc != NULL) {
-            degres[i]++; // Chaque arc entrant compte comme un lien pour cette espèce
+            degres[i]++; // chaque arc entrant compte comme un lien pour cette espèce
             arc = arc->arc_suivant;
         }
     }
-    // Tri des sommets par leur nombre de liaisons, de manière décroissante
+    // tri des sommets par leur nombre de liaisons, de manière décroissante
     for (int i = 0; i < graphe->ordre - 1; i++) {
         for (int j = i + 1; j < graphe->ordre; j++) {
             if (degres[i] < degres[j]) {
-                // Échange les degrés
+                // echange les degrés
                 int temp = degres[i];
                 degres[i] = degres[j];
                 degres[j] = temp;
-                // Échange les noms des sommets
+                // echange les noms des sommets
                 char* temp_nom = graphe->pSommet[i]->nom;
                 graphe->pSommet[i]->nom = graphe->pSommet[j]->nom;
                 graphe->pSommet[j]->nom = temp_nom;
             }
         }
     }
-    // Afficher les espèces avec le plus grand nombre de liaisons
+    // afficher les espèces avec le plus grand nombre de liaisons
     printf("Centralite de degre (especes les plus connectees) :\n");
     for (int i = 0; i < graphe->ordre; i++) {
         printf("- %s : %d liaisons\n", graphe->pSommet[i]->nom, degres[i]);
