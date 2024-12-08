@@ -212,10 +212,12 @@ void Simu(Graphe* graphe) {
 Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
     Graphe* Graphe_simu = Copie_graphe(graphe);
     float* populations_anterieures = malloc(graphe->ordre * sizeof(float));
+    int Pmax[graphe->ordre];
 
-    // Initialiser les populations antérieures à la population actuelle
+    // Initialisation des populations antérieures et création de Pmax
     for (int i = 0; i < graphe->ordre; i++) {
         populations_anterieures[i] = (float)Graphe_simu->pSommet[i]->N;
+        Pmax[i] = Graphe_simu->pSommet[i]->N * 20; // 1000 % de la population initiale
     }
 
     // Appliquer les calculs pour chaque semaine
@@ -229,10 +231,9 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
             // Remplir les listes de successeurs et prédécesseurs
             Successeur_Predecesseur(graphe, i, successeurs, &nbSuccesseurs, predesseurs, &nbPredesseurs);
 
-
-            float N_i = populations_anterieures[i];  // Population initiale pour ce tour
+            float N_i = populations_anterieures[i]; // Population actuelle
             float r_i = Graphe_simu->pSommet[i]->coef; // Coefficient de croissance
-            float K_i = 0;
+            float K_i = 0; // Capacité de charge
 
             // Calcul de K_i à partir des prédécesseurs
             for (int j = 0; j < nbPredesseurs; j++) {
@@ -247,30 +248,38 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
                 }
             }
 
-            // Vérification des conditions de K_i
+            // Ajustements de K_i pour éviter des anomalies
             if (K_i < Kmin) {
-                K_i = fmax(Kmin, N_i * 0.1); // Eviter que K_i devienne trop petit et que cela fausse les calculs
+                K_i = fmax(Kmin, N_i * 0.1); // Kmin ou 10 % de N_i
             }
             if (N_i / K_i > 1) {
-                K_i = fmax(K_i, N_i); // Ajuster K_i de façon à éviter que la population dépasse la capacité
+                K_i = fmax(K_i, N_i); // Ajustement pour éviter dépassement
             }
 
-
-
+            // Calcul de la population en fonction des conditions
             if (nbSuccesseurs == 0) {
-                N_i += r_i * N_i * (1 - (N_i / K_i)) - N_i * CoefMortalite;
+                N_i += r_i * N_i * (1 - (N_i / K_i)); // Croissance de type logistique
+                N_i -= N_i * CoefMortalite;          // Effet de mortalité
             } else if (nbPredesseurs == 0) {
-                N_i += r_i * N_i - SommePopMangee(successeurs, nbSuccesseurs, Graphe_simu, populations_anterieures,i);
+                N_i += r_i * N_i; // Croissance exponentielle
+                N_i -= SommePopMangee(successeurs, nbSuccesseurs, Graphe_simu, populations_anterieures, i); // Prédation
             } else {
-                N_i += r_i * N_i * (1 - (N_i / K_i)) - SommePopMangee(successeurs, nbSuccesseurs, Graphe_simu, populations_anterieures,i);
+                N_i += r_i * N_i * (1 - (N_i / K_i)); // Croissance logistique
+                N_i -= SommePopMangee(successeurs, nbSuccesseurs, Graphe_simu, populations_anterieures, i); // Prédation
             }
 
-            if (N_i < 0) N_i = 0;
-            if (N_i >= Nmax) N_i = Nmax;
-            Graphe_simu->pSommet[i]->N = (int)N_i;
+            // Appliquer l'effet de Pmax sur la croissance
+            if (N_i > Pmax[i]) {
+                N_i -= r_i * N_i * ((N_i - Pmax[i]) / Pmax[i]); // Diminution progressive
+            }
+
+            // Vérifications finales
+            if (N_i < 0) N_i = 0;         // Éviter les valeurs négatives
+
+            Graphe_simu->pSommet[i]->N = (int)N_i; // Mise à jour dans le graphe simulé
         }
 
-        // Mettre à jour les populations antérieures pour le prochain tour
+        // Mettre à jour les populations pour la prochaine semaine
         for (int i = 0; i < graphe->ordre; i++) {
             populations_anterieures[i] = (float)Graphe_simu->pSommet[i]->N;
         }
@@ -279,6 +288,7 @@ Graphe* Graphe_semaine(Graphe* graphe, int semaine) {
     free(populations_anterieures);
     return Graphe_simu;
 }
+
 
 
 
@@ -482,7 +492,7 @@ void creer_dot(const char *fichier_texte, const char *fichier_dot) {
     printf("Le fichier DOT est genere : %s\n", fichier_dot);
 }
 // Fonction pour afficher le graphe sous forme d'image PNG
-void afficher_graphe_png(const char *fichier_dot) {
+void  afficher_graphe_png(const char *fichier_dot) {
     char commande[200];
     char fichier_png[100];
 
