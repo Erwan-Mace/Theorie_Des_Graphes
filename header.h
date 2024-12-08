@@ -60,4 +60,5 @@ void liaisonniv(Graphe* graphe);
 void centralite(Graphe* graphe);
 void connexite(Graphe* graphe);
 void lireFichier2(Graphe* graphe);
+void Source();
 #endif //CODE_BASE_PROJET_HEADER_H
