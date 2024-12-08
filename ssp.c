@@ -853,3 +853,44 @@ void centralite(Graphe* graphe) {
     }
     free(degres);
 }
+
+
+void Source() {
+    while (!_kbhit()) { //tant qu'une touche n'est pas appuyer
+        system("cls");
+        printf("\033[0;35m");
+        afficher_centre("Source");
+        dessiner_ligne('-');
+        printf("\033[0m");
+        printf("Premierement voici ou nous avons trouve nos 3 graphes :\n\n");
+        printf("Graphe de la Mer : "
+               "\033[0;34m"
+               "https://www.researchgate.net/figure/Simplified-view-of-the-generalised-food-web-supporting-tuna-and-other-large-pelagic-fish_fig2_274375553\n");
+        printf("\033[0m");
+        printf("Graphe de la Foret : "
+               "\033[0;34m"
+               "https://www.svtsciences.com/2020/12/chapitre-3-lalimentation-chez-les-etres.html\n");
+        printf("\033[0m");
+        printf("Graphe de la Savane : "
+               "\033[0;34m"
+               "https://savannabiomeassignment.weebly.com/food-web.html\n");
+        printf("\033[0m");
+        printf("Lien aidant pour l implementation des fonctions lireGraphe 1 et 2:\n\n");
+        printf("\033[0;34m");
+        printf("https://stacklima.com/programme-c-pour-implementer-la-matrice-d-adjacence-d-un-graphe-donne/\n");
+        printf("https://openclassrooms.com/forum/sujet/matrice-en-c-84830\n");
+        printf("https://www.squalenet.net/fr/ti/tutorial_c/12-tableaux-listes-matrices.php5\n\n");
+        printf("\033[0m");
+
+        printf("Lien aidant l implementation des fonctions de la connexité et du bfs :\n\n");
+        printf("\033[0;34m");
+        printf("https://www.developpez.net/forums/i1585518/c-cpp/cpp/graphe-oriente-non-oriente/\n");
+        printf("https://fr.wiki-base.com/7779269-breadth-first-search\n");
+
+        printf("\033[0;35m");
+        printf("\nAppuyez sur une touche pour continuer...\n");
+        printf("\033[0m");
+        _sleep(800);
+    }
+    _getch();//permet de capturer si une touche est appuyer
+}
