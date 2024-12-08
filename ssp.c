@@ -511,9 +511,7 @@ void  afficher_graphe_png(const char *fichier_dot) {
         return;
     }
 
-    sprintf(commande, "start %s", fichier_png); // Windows
-    // Pour Linux, utilisez : sprintf(commande, "xdg-open %s", fichier_png);
-    // Pour macOS, utilisez : sprintf(commande, "open %s", fichier_png);
+    sprintf(commande, "start %s", fichier_png);
     system(commande);
 
     printf("Le graphe PNG est affiche : %s\n", fichier_png);
@@ -823,7 +821,7 @@ void connexite(Graphe* graphe) {
 }
 
 void centralite(Graphe* graphe) {
-    // Tableau pour stocker le nombre de liaisons (degré) pour chaque espèce
+    // Tableau pour stocker le nombre de liaisons pour chaque espèce
     int* degres = (int*)calloc(graphe->ordre, sizeof(int));
     // Calculer le degré de chaque sommet (espèce)
     for (int i = 0; i < graphe->ordre; i++) {
@@ -841,7 +839,7 @@ void centralite(Graphe* graphe) {
                 int temp = degres[i];
                 degres[i] = degres[j];
                 degres[j] = temp;
-                // Échange les noms des sommets (espèces)
+                // Échange les noms des sommets
                 char* temp_nom = graphe->pSommet[i]->nom;
                 graphe->pSommet[i]->nom = graphe->pSommet[j]->nom;
                 graphe->pSommet[j]->nom = temp_nom;
